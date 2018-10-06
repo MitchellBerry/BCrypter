@@ -5,3 +5,5 @@ authors = ["MitchellBerry <mitchellberry@protonmail.com>"]
 
 [dependencies]
 blowfish = { version = "0.3.0", features = ["bcrypt"] }
+base64 = "0.9.3"
+rand = "0.5.5"
