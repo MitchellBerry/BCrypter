@@ -2,11 +2,13 @@
 extern crate rand;
 extern crate base64;
 extern crate blowfish;
-
+extern crate byte_tools;
 
 use rand::Rng;
 use base64::{encode_config, decode_config, CRYPT};
 use blowfish::Blowfish;
+use byte_tools::write_u32_be;
+
 // use block_modes::{Ecb, BlockMode, BlockModeIv};
 // use block_modes::block_padding::ZeroPadding;
 
@@ -129,13 +131,15 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
             ctext[i] = l;
             ctext[i+1] = r;
         }
-        let (mut low, mut mid) = (i*4, (i+1)*4);
-        let ctext_bytes = ctext[i].to_be_bytes();
-        let ctext_bytes1 = ctext[i+1].to_be_bytes();
-        for j in 0..4 {
-            output[low + j] = ctext_bytes[j];
-            output[mid + j] = ctext_bytes1[j]; 
-        }
+        // let (mut low, mut mid) = (i*4, (i+1)*4);
+        // let ctext_bytes = ctext[i].to_be_bytes();
+        // let ctext_bytes1 = ctext[i+1].to_be_bytes();
+        // for j in 0..4 {
+        //     output[low + j] = ctext_bytes[j];
+        //     output[mid + j] = ctext_bytes1[j]; 
+        // }
+        write_u32_be(&mut output[i * 4..(i + 1) * 4], ctext[i]);
+        write_u32_be(&mut output[(i + 1) * 4..(i + 2) * 4], ctext[i + 1]);
     }
     output
 }
@@ -162,5 +166,10 @@ mod tests {
         println!("{}", out.hash_string);
         
 
+    }
+
+    #[test]
+    fn b() {
+        unimplemented!();
     }
 }
