@@ -1,23 +1,25 @@
+#![feature(int_to_from_bytes)]
 extern crate rand;
 extern crate base64;
 extern crate blowfish;
-extern crate block_modes;
+
 
 use rand::Rng;
-use base64::{encode_config, decode_config};
+use base64::{encode_config, decode_config, CRYPT};
 use blowfish::Blowfish;
 // use block_modes::{Ecb, BlockMode, BlockModeIv};
 // use block_modes::block_padding::ZeroPadding;
 
 // type BlowfishECB = Ecb<Blowfish, ZeroPadding>;
 
-fn bcrypt(password: String) {
-    let inputs = Bcrypt{password: password,
-                        salt: None,
-                        cost: None};
+fn bcrypt(password: String) -> Bcrypt{
+    Bcrypt{password: password,
+            salt: None,
+            cost: None}
     
 
 }
+
 
 struct Bcrypt {
     pub password: String, 
@@ -27,9 +29,23 @@ struct Bcrypt {
 
 impl Bcrypt{
 
-    fn hash(){
-
+    pub fn hash(self)-> Output{
+        let input = self.set_defualts();
+        let cost = input.cost.unwrap();
+        let salt = input.salt.unwrap();
+        let salt_b64 = encode_config(&salt, CRYPT);
+        let digest: [u8; 24] = hasher(input);
+        let digest_b64 = encode_config(&digest, CRYPT);
+        let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
+        Output{ digest,
+                digest_b64,
+                salt,
+                salt_b64,
+                cost,
+                hash_string}
     }
+
+
 
     fn salt (self, salt: [u8; 16]) -> Bcrypt {
         Bcrypt {
@@ -50,7 +66,7 @@ impl Bcrypt{
         }   
     }
 
-    fn set_defualts(mut self){
+    fn set_defualts(mut self) -> Bcrypt{
         if self.salt == None {
             let mut rng = rand::thread_rng();
             let salt : [u8; 16] = rng.gen();
@@ -59,12 +75,26 @@ impl Bcrypt{
         if self.cost == None {
             self.cost = Some(12);
         }
-    }  
+        self
+    }
 } 
 
-struct output {
-    byte_digest : [u8; 24],
-    hash_string : String
+fn concat_hash_string(cost: u8, salt_b64 : &String, digest_b64: &String) -> String{
+    format!("$2b${:02}${}{}", cost, salt_b64, digest_b64)
+}
+
+struct Output {
+    digest : [u8; 24],
+    digest_b64 : String,
+    salt: [u8; 16],
+    salt_b64: String,
+    cost: u8,
+    hash_string: String
+
+}
+
+impl Output {
+
 }
 
 
@@ -81,13 +111,17 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
 
 fn hasher(inputs: Bcrypt)-> [u8; 24]{
     let mut output = [0u8; 24];
-    let state = eks_blowfish_setup(inputs.password.as_bytes(),
-                                    &inputs.salt.unwrap(),
-                                    inputs.cost.unwrap());
+    let salt = inputs.salt.unwrap();
+    let cost = inputs.cost.unwrap();
+    let mut pw_bytes = inputs.password.into_bytes();
+    pw_bytes.push(0);
+    let state = eks_blowfish_setup(&pw_bytes,
+                                   &salt,
+                                    cost);
 
 
-    let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c, 0x64657253, 0x63727944, 0x6f756274];
-
+    let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
+                     0x64657253, 0x63727944, 0x6f756274];
 
     for i in (0..6).step_by(2) {
         for _ in 0..64 {
@@ -95,19 +129,38 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
             ctext[i] = l;
             ctext[i+1] = r;
         }
-        let (low, mid, high) = (i*4, (i+1)*4, (i+2)*4);
-        output[low..mid] = ctext[i].to_be_bytes();
-        output[mid..high] = ctext[i+1].to_be_bytes();
+        let (mut low, mut mid) = (i*4, (i+1)*4);
+        let ctext_bytes = ctext[i].to_be_bytes();
+        let ctext_bytes1 = ctext[i+1].to_be_bytes();
+        for j in 0..4 {
+            output[low + j] = ctext_bytes[j];
+            output[mid + j] = ctext_bytes1[j]; 
+        }
     }
     output
 }
 
+// fn vec_to_array(vec : Vec<u8>) -> &[u8] {
+//     let out = [0u8; vec.len()];
+//     let i = 0;
+//     for slice in vec.iter(){
+//         out[i] = slice;
+//         i += 1;
 
-// #[cfg(test)]
-// mod tests {
-
-//     #[test]
-//     fn it_works() {
-//         4;
 //     }
+//     out
 // }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn it_works() {
+        let mut result = bcrypt(String::from("password")).cost(4);
+        let out = result.hash();
+        println!("{}", out.hash_string);
+        
+
+    }
+}
