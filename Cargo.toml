@@ -1,0 +1,7 @@
+[package]
+name = "bcrypt"
+version = "0.1.0"
+authors = ["MitchellBerry <mitchellberry@protonmail.com>"]
+
+[dependencies]
+blowfish = { "0.3.0", features = ["bcrypt"] }
