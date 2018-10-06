@@ -4,6 +4,7 @@ extern crate rand;
 
 use blowfish::Blowfish;
 use base64::{encode, decode};
+use rand::{thread_rng, Rng};
 
 
 struct Bcrypt {
@@ -20,6 +21,7 @@ impl Bcrypt{
             cost: self.cost
         }
     }
+    
     fn cost (self, cost: u8) -> Bcrypt {
         match cost {
             4..=32 =>    Bcrypt {
@@ -30,15 +32,18 @@ impl Bcrypt{
             _ => panic!("Invalid cost parameter")
         }   
     }
-}
 
-//     fn set_defualts(self) -> Bcrypt {
-//         if self.salt == None {
-            
-//         }
-
-//     }  
-// } 
+    fn set_defualts(self){
+        if self.salt == None {
+            let salt = [0u8; 16];
+            thread_rng().fill_bytes(&mut salt);
+            self.salt = Some(salt);
+        }
+        if self.cost == None {
+            self.cost = Some(12);
+        }
+    }  
+} 
 
 struct output {
     byte_digest : [u8; 24],
