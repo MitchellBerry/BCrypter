@@ -2,12 +2,10 @@
 extern crate rand;
 extern crate base64;
 extern crate blowfish;
-extern crate byte_tools;
 
 use rand::Rng;
 use base64::{encode_config, decode_config, CRYPT};
 use blowfish::Blowfish;
-use byte_tools::write_u32_be;
 
 // use block_modes::{Ecb, BlockMode, BlockModeIv};
 // use block_modes::block_padding::ZeroPadding;
@@ -15,11 +13,10 @@ use byte_tools::write_u32_be;
 // type BlowfishECB = Ecb<Blowfish, ZeroPadding>;
 
 fn bcrypt(password: String) -> Bcrypt{
-    Bcrypt{password: password,
+    let mut inputs = Bcrypt{password: password,
             salt: None,
-            cost: None}
-    
-
+            cost: None};
+    inputs    
 }
 
 
@@ -35,6 +32,7 @@ impl Bcrypt{
         let input = self.set_defualts();
         let cost = input.cost.unwrap();
         let salt = input.salt.unwrap();
+
         let salt_b64 = encode_config(&salt, CRYPT);
         let digest: [u8; 24] = hasher(input);
         let digest_b64 = encode_config(&digest, CRYPT);
@@ -95,9 +93,6 @@ struct Output {
 
 }
 
-impl Output {
-
-}
 
 
 fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
@@ -112,11 +107,12 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
 }
 
 fn hasher(inputs: Bcrypt)-> [u8; 24]{
-    let mut output = [0u8; 24];
+    let mut output : Vec<u8> = Vec::new();
     let salt = inputs.salt.unwrap();
     let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
-    pw_bytes.push(0);
+    
+    //pw_bytes.push(0);
     let state = eks_blowfish_setup(&pw_bytes,
                                    &salt,
                                     cost);
@@ -131,6 +127,7 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
             ctext[i] = l;
             ctext[i+1] = r;
         }
+
         // let (mut low, mut mid) = (i*4, (i+1)*4);
         // let ctext_bytes = ctext[i].to_be_bytes();
         // let ctext_bytes1 = ctext[i+1].to_be_bytes();
@@ -138,38 +135,52 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
         //     output[low + j] = ctext_bytes[j];
         //     output[mid + j] = ctext_bytes1[j]; 
         // }
-        write_u32_be(&mut output[i * 4..(i + 1) * 4], ctext[i]);
-        write_u32_be(&mut output[(i + 1) * 4..(i + 2) * 4], ctext[i + 1]);
+        let (mut first, mut second) = (i*4, (i+1)*4);
+        output.extend_from_slice(&ctext[i].to_be_bytes());
+        output.extend_from_slice(&ctext[i+1].to_be_bytes());
+        
+        //write_u32_be(&mut output[i * 4..(i + 1) * 4], ctext[i]);
+        //write_u32_be(&mut output[(i + 1) * 4..(i + 2) * 4], ctext[i + 1]);
     }
-    output
+    output_vec_to_array(output)
 }
 
-// fn vec_to_array(vec : Vec<u8>) -> &[u8] {
-//     let out = [0u8; vec.len()];
-//     let i = 0;
-//     for slice in vec.iter(){
-//         out[i] = slice;
-//         i += 1;
+fn output_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
+    let mut out = [0u8; 24];
+    for (i, slice) in vec.iter().enumerate(){
+        out[i] = *slice;
+    }
+    out
+}
 
-//     }
-//     out
-// }
-
+fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
+    let mut out = [0u8; 16];
+    for (i, slice) in vec.iter().enumerate(){
+        out[i] = *slice;
+    }
+    out
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn it_works() {
-        let mut result = bcrypt(String::from("password")).cost(4);
+        
+        let saltvec = decode_config("EGdrhbKUv8Oc9vGiXX0HQO", CRYPT).unwrap();
+        let a : &[u8] = saltvec.as_ref();
+        let mut salt_test = [0u8; 16]; 
+        let mut result = bcrypt(String::from("correctbatteryhorsestapler"))
+                            .cost(4);
+                            //.salt(salt_vec_to_array(saltvec));
         let out = result.hash();
         println!("{}", out.hash_string);
-        
+        //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
 
     }
 
-    #[test]
-    fn b() {
-        unimplemented!();
-    }
+    // #[test]
+    // fn b() {
+    //     unimplemented!();
+    // }
 }
