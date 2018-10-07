@@ -7,7 +7,7 @@ extern crate byte_tools;
 use rand::Rng;
 use base64::{encode_config, decode_config, CRYPT};
 use blowfish::Blowfish;
-// use byte_tools::write_u32_be;
+use byte_tools::write_u32_be;
 
 // use block_modes::{Ecb, BlockMode, BlockModeIv};
 // use block_modes::block_padding::ZeroPadding;
