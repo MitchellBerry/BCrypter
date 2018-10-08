@@ -4,8 +4,12 @@ extern crate base64;
 extern crate blowfish;
 
 use rand::Rng;
-use base64::{encode_config, decode_config, CRYPT};
+//use base64::{encode_config, decode_config, CRYPT};
 use blowfish::Blowfish;
+
+mod b64;
+
+use b64::{encode, decode};
 
 // use block_modes::{Ecb, BlockMode, BlockModeIv};
 // use block_modes::block_padding::ZeroPadding;
@@ -33,9 +37,9 @@ impl Bcrypt{
         let cost = input.cost.unwrap();
         let salt = input.salt.unwrap();
 
-        let salt_b64 = encode_config(&salt, CRYPT);
+        let salt_b64 = b64::encode(salt.to_vec());
         let digest: [u8; 24] = hasher(input);
-        let digest_b64 = encode_config(&digest, CRYPT);
+        let digest_b64 = b64::encode(digest.to_vec());
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
         Output{ digest,
                 digest_b64,
@@ -167,7 +171,7 @@ mod tests {
     #[test]
     fn it_works() {
         
-        let saltvec = decode_config("EGdrhbKUv8Oc9vGiXX0HQO", CRYPT).unwrap();
+        let saltvec = decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
         let a : &[u8] = saltvec.as_ref();
         let mut salt_test = [0u8; 16]; 
         let mut result = bcrypt(String::from("correctbatteryhorsestapler"))
