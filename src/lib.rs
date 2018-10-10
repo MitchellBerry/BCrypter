@@ -6,8 +6,10 @@ extern crate rand;
 extern crate alloc;
 extern crate base64;
 extern crate blowfish;
+extern crate std;
 
 pub mod b64;
+mod errors;
 
 use rand::Rng;
 use alloc::format;
@@ -26,6 +28,14 @@ pub struct Bcrypt {
 }
 
 impl Bcrypt{
+    pub fn verify(bcrypt_hash: String){
+
+    }
+
+    fn split_hash_string(hash_string : String){
+
+    }
+
     pub fn hash(self)-> Output{
         let input = self.set_defualts();
         let cost = input.cost.unwrap();
@@ -96,8 +106,8 @@ fn digest(inputs: Bcrypt)-> [u8; 24]{
     if pw_bytes.len() > 71 {pw_bytes.truncate(72)};
     pw_bytes.push(0); // null byte terminator
     let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
-    let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
-                     0x64657253, 0x63727944, 0x6f756274];
+    let mut ctext = [0x4f72_7068, 0x6561_6e42, 0x6568_6f6c,
+                     0x6465_7253, 0x6372_7944, 0x6f75_6274];
     for i in (0..6).step_by(2) {
         let j = i + 1;
         for _ in 0..64 {

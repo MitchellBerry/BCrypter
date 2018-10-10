@@ -4,6 +4,8 @@ use alloc::vec::Vec;
 use alloc::string::String;
 use alloc::prelude::ToString;
 
+use errors::CheckError;
+
 pub fn decode(b64: String) -> Vec<u8>{
     let std_b64 = bcrypt_to_std(b64);
     base64::decode(&std_b64).unwrap()
@@ -14,6 +16,7 @@ pub fn encode(bytes: Vec<u8>) -> String{
     let trimmed = std_b64.replace("=", "");
     std_to_bcrypt(trimmed)
 }
+
 
 fn std_to_bcrypt(std_b64: String) -> String {
     let mut output = "".to_string();
@@ -46,6 +49,15 @@ fn char_to_std64(letter: char) -> char{
     ascii as char
 }
 
+pub fn valid_bcrypt_hash(b64: String) -> Result<bool, CheckError>{
+    for c in b64.chars(){
+        match c as u8{
+            36 | 46..=57 | 61 | 65..=90 | 97..=122 => (),
+            _ => return Err(CheckError::InvalidFormat)
+        }
+    }
+    Ok(true)
+}
 fn char_to_bcrypt64 (letter: char) -> char{
     let mut ascii = letter as u8;
     match ascii {

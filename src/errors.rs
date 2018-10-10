@@ -1,21 +1,56 @@
-#![no_std]
+use std::{error, fmt};
 
-extern crate std;
+/// `scrypt()` error
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct InvalidOutputLen;
 
-use std::error::Error;
+/// `ScryptParams` error
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct InvalidParams;
 
-
-#[derive(Debug)]
-enum BcryptError {
-    InvalidCost(Error),
-    VerifyFailed(Error)
+/// `scrypt_check` error
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum CheckError {
+    /// Password hash mismatch, e.g. due to the incorrect password.
+    HashMismatch,
+    /// Invalid format of the hash string.
+    InvalidFormat,
 }
 
-impl fmt::Display for BcryptError {
+impl fmt::Display for InvalidOutputLen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {            
-            BcryptError::InvalidCost(ref err) => write!(f, "Cost must be between 4-31: {}", err),
-            BcryptError::VerifyFailed(ref err) => write!(f, "Password does not match: {}", err),
+        f.write_str("invalid output buffer length")
+    }
+}
+
+impl error::Error for InvalidOutputLen {
+    fn description(&self) -> &str { "invalid output buffer length" }
+}
+
+impl fmt::Display for InvalidParams {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid scrypt parameters")
+    }
+}
+
+impl error::Error for InvalidParams {
+    fn description(&self) -> &str { "invalid scrypt parameters" }
+}
+
+impl fmt::Display for CheckError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match *self {
+            CheckError::HashMismatch => "password hash mismatch",
+            CheckError::InvalidFormat => "invalid `hashed_value` format",
+        })
+    }
+}
+
+impl error::Error for CheckError {
+    fn description(&self) -> &str {
+        match *self {
+            CheckError::HashMismatch => "password hash mismatch",
+            CheckError::InvalidFormat => "invalid `hashed_value` format",
         }
     }
 }
