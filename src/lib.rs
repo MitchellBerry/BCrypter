@@ -184,12 +184,12 @@ mod tests {
         let a : &[u8] = saltvec.as_ref();
         let mut salt_test = [0u8; 16]; 
         let mut result = bcrypt(String::from("correctbatteryhorsestapler"))
-                            .cost(4);
-                            //.salt(salt_vec_to_array(saltvec));
+                            .cost(4)
+                            .salt(salt_vec_to_array(saltvec.clone()));
         let out = result.hash();
         //println!("{}", out.hash_string);
         //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
-
+        let a = 1;
     }
 
     // #[test]
