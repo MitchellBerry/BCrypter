@@ -23,7 +23,7 @@ pub fn encode(bytes: Vec<u8>) -> String{
 fn std_to_bcrypt(std_b64: String) -> String {
     let mut output = "".to_string();
     for c in std_b64.chars(){
-        output.push(char_to_std64(c));
+        output.push(char_to_bcrypt64(c));
     }
     output
 }
