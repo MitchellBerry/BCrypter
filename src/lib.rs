@@ -15,7 +15,7 @@ use blowfish::Blowfish;
 use std::string::String;
 use alloc::prelude::ToString;
 
-mod b64;
+pub mod b64;
 
 use b64::{encode, decode};
 
@@ -25,15 +25,15 @@ use b64::{encode, decode};
 
 // type BlowfishECB = Ecb<Blowfish, ZeroPadding>;
 
-fn bcrypt(password: String) -> Bcrypt{
-    let mut inputs = Bcrypt{password: password,
+pub fn bcrypt(password: String) -> Bcrypt{
+    let inputs = Bcrypt{password: password,
             salt: None,
             cost: None};
     inputs    
 }
 
 
-struct Bcrypt {
+pub struct Bcrypt {
     pub password: String, 
     pub salt : Option<[u8; 16]>,
     pub cost : Option<u8>,
@@ -48,7 +48,7 @@ impl Bcrypt{
 
         let salt_b64 = b64::encode(salt.to_vec());
         let digest: [u8; 24] = hasher(input);
-        let digest_b64 = b64::encode(digest.to_vec());
+        let digest_b64 = b64::encode(digest[..23].to_vec()); //Remove last byte
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
         Output{ digest,
                 digest_b64,
@@ -96,7 +96,7 @@ fn concat_hash_string(cost: u8, salt_b64 : &String, digest_b64: &String) -> Stri
     format!("$2b${:02}${}{}", cost, salt_b64, digest_b64)
 }
 
-struct Output {
+pub struct Output {
     digest : [u8; 24],
     digest_b64 : String,
     salt: [u8; 16],
@@ -184,8 +184,8 @@ mod tests {
         let a : &[u8] = saltvec.as_ref();
         let mut salt_test = [0u8; 16]; 
         let mut result = bcrypt(String::from("correctbatteryhorsestapler"))
-                            .cost(4)
-                            .salt(salt_vec_to_array(saltvec.clone()));
+                            .cost(4);
+                            //.salt(salt_vec_to_array(saltvec.clone()));
         let out = result.hash();
         //println!("{}", out.hash_string);
         //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
