@@ -17,7 +17,8 @@ pub fn decode(b64: String) -> Vec<u8>{
 
 pub fn encode(bytes: Vec<u8>) -> String{
     let std_b64 = base64::encode(&bytes);
-    std_to_bcrypt(std_b64)
+    let trimmed = std_b64.replace("=", "");
+    std_to_bcrypt(trimmed)
 }
 
 fn std_to_bcrypt(std_b64: String) -> String {
