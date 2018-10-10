@@ -2,7 +2,6 @@
 #![feature(alloc)]
 #![feature(int_to_from_bytes)]
 
-extern crate std;
 extern crate rand;
 extern crate alloc;
 extern crate base64;
@@ -13,9 +12,9 @@ mod tests;
 
 use rand::Rng;
 use alloc::format;
-use std::vec::Vec;
+use alloc::vec::Vec;
 use blowfish::Blowfish;
-use std::string::String;
+use alloc::string::String;
 
 pub fn pw(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
