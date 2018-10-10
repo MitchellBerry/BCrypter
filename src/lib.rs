@@ -80,12 +80,12 @@ impl Bcrypt{
 } 
 
 pub struct Output {
-    digest : [u8; 24],
-    digest_b64 : String,
-    salt: [u8; 16],
-    salt_b64: String,
-    cost: u8,
-    hash_string: String
+    pub digest : [u8; 24],
+    pub digest_b64 : String,
+    pub salt: [u8; 16],
+    pub salt_b64: String,
+    pub cost: u8,
+    pub hash_string: String
 }
 
 fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {

@@ -50,6 +50,9 @@ fn char_to_std64(letter: char) -> char{
 }
 
 pub fn valid_bcrypt_hash(b64: String) -> Result<bool, CheckError>{
+    if b64.len() != 60 {
+        return Err(CheckError::InvalidFormat)
+    }
     for c in b64.chars(){
         match c as u8{
             36 | 46..=57 | 61 | 65..=90 | 97..=122 => (),
