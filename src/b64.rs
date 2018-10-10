@@ -6,8 +6,8 @@
 //static std_vec : &[u8] = STD_B64.as_bytes();
 
 use base64;
-use std::vec::Vec;
-use std::string::String;
+use alloc::vec::Vec;
+use alloc::string::String;
 use alloc::prelude::ToString;
 
 pub fn decode(b64: String) -> Vec<u8>{

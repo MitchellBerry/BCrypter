@@ -7,4 +7,3 @@ authors = ["Mitchell Berry <mitchellberry@protonmail.com>"]
 blowfish = { version = "0.3.0", features = ["bcrypt"] }
 base64 = "0.9.3"
 rand = "0.5.5"
-block-modes = "0.2.0"

@@ -2,7 +2,6 @@
 #![feature(alloc)]
 #![feature(int_to_from_bytes)]
 
-extern crate std;
 extern crate rand;
 extern crate alloc;
 extern crate base64;
@@ -12,19 +11,18 @@ pub mod b64;
 
 use rand::Rng;
 use alloc::format;
-use std::vec::Vec;
+use alloc::vec::Vec;
 use blowfish::Blowfish;
-use std::string::String;
-use alloc::prelude::ToString;
+use alloc::string::String;
 
-pub fn bcrypt(password: String) -> Bcrypt{
+pub fn password(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
 }
 
 pub struct Bcrypt {
-    pub password: String, 
-    pub salt : Option<[u8; 16]>,
-    pub cost : Option<u8>,
+    password: String, 
+    salt : Option<[u8; 16]>,
+    cost : Option<u8>,
 }
 
 impl Bcrypt{
@@ -33,7 +31,7 @@ impl Bcrypt{
         let cost = input.cost.unwrap();
         let salt = input.salt.unwrap();
         let salt_b64 = b64::encode(salt.to_vec());
-        let digest: [u8; 24] = hasher(input);
+        let digest: [u8; 24] = digest(input);
         let digest_b64 = b64::encode(digest[..23].to_vec()); //Remove last byte
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
         Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
@@ -90,12 +88,13 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     state
 }
 
-fn hasher(inputs: Bcrypt)-> [u8; 24]{
+fn digest(inputs: Bcrypt)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
     let salt = inputs.salt.unwrap();
     let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
-    pw_bytes.push(0);
+    if pw_bytes.len() > 71 {pw_bytes.truncate(72)};
+    pw_bytes.push(0); // null byte terminator
     let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
     let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
                      0x64657253, 0x63727944, 0x6f756274];
@@ -122,31 +121,4 @@ fn output_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
 
 fn concat_hash_string(cost: u8, salt : &String, digest: &String) -> String{
     format!("$2b${:02}${}{}", cost, salt, digest)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
-        let mut out = [0u8; 16];
-        for (i, slice) in vec.iter().enumerate(){
-            out[i] = *slice;
-        }
-        out
-    }
-
-    #[test]
-    fn it_works() {
-        
-        let saltvec = b64::decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
-        let a : &[u8] = saltvec.as_ref();
-        let result = bcrypt(String::from("correctbatteryhorsestapler"))
-                            .cost(4)
-                            .salt(salt_vec_to_array(saltvec.clone()));
-        let out = result.hash();
-        //println!("{}", out.hash_string);
-        //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
-        let _a = 1;
-    }
 }
