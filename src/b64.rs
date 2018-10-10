@@ -1,10 +1,3 @@
-//use std::string;
-//use std::ops::Add;
-//const BCRYPT_B64 : &'static str = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-//const STD_B64 : &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-//static bcrypt_vec: &[u8] = BCRYPT_B64.as_bytes();
-//static std_vec : &[u8] = STD_B64.as_bytes();
-
 use base64;
 use alloc::vec::Vec;
 use alloc::string::String;

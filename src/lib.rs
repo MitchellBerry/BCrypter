@@ -71,9 +71,9 @@ impl Bcrypt{
 
 pub struct Output {
     digest : [u8; 24],
-    digest_b64 : &'static str,
+    digest_b64 : String,
     salt: [u8; 16],
-    salt_b64: &'static str,
+    salt_b64: String,
     cost: u8,
     hash_string: String
 }
