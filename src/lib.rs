@@ -1,16 +1,25 @@
+#![no_std]
+#![feature(alloc)]
 #![feature(int_to_from_bytes)]
+
+extern crate std;
 extern crate rand;
+extern crate alloc;
 extern crate base64;
 extern crate blowfish;
 
 use rand::Rng;
-//use base64::{encode_config, decode_config, CRYPT};
+use alloc::format;
+use std::vec::Vec;
 use blowfish::Blowfish;
+use std::string::String;
+use alloc::prelude::ToString;
 
 mod b64;
 
 use b64::{encode, decode};
 
+//use base64::{encode_config, decode_config, CRYPT};
 // use block_modes::{Ecb, BlockMode, BlockModeIv};
 // use block_modes::block_padding::ZeroPadding;
 
@@ -116,7 +125,7 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
     let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
     
-    //pw_bytes.push(0);
+    pw_bytes.push(0);
     let state = eks_blowfish_setup(&pw_bytes,
                                    &salt,
                                     cost);
@@ -178,7 +187,7 @@ mod tests {
                             .cost(4);
                             //.salt(salt_vec_to_array(saltvec));
         let out = result.hash();
-        println!("{}", out.hash_string);
+        //println!("{}", out.hash_string);
         //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
 
     }

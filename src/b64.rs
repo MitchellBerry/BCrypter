@@ -1,64 +1,67 @@
 
-    use base64;
-    //use std::string;
-    //use std::ops::Add;
-    //const BCRYPT_B64 : &'static str = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    //const STD_B64 : &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    //static bcrypt_vec: &[u8] = BCRYPT_B64.as_bytes();
-    //static std_vec : &[u8] = STD_B64.as_bytes();
+use base64;
+use std::vec::Vec;
+use std::string::String;
+use alloc::prelude::ToString;
+//use std::string;
+//use std::ops::Add;
+//const BCRYPT_B64 : &'static str = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+//const STD_B64 : &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+//static bcrypt_vec: &[u8] = BCRYPT_B64.as_bytes();
+//static std_vec : &[u8] = STD_B64.as_bytes();
 
-    pub fn decode(b64: String) -> Vec<u8>{
-        let std_b64 = bcrypt_to_std(b64);
-        base64::decode(&std_b64).unwrap()
+pub fn decode(b64: String) -> Vec<u8>{
+    let std_b64 = bcrypt_to_std(b64);
+    base64::decode(&std_b64).unwrap()
+}
+
+pub fn encode(bytes: Vec<u8>) -> String{
+    let std_b64 = base64::encode(&bytes);
+    std_to_bcrypt(std_b64)
+}
+
+fn std_to_bcrypt(std_b64: String) -> String {
+    let mut output = "".to_string();
+    for c in std_b64.chars(){
+        output.push(char_to_std64(c));
     }
+    output
+}
 
-    pub fn encode(bytes: Vec<u8>) -> String{
-        let std_b64 = base64::encode(&bytes);
-        std_to_bcrypt(std_b64)
+fn bcrypt_to_std(bcrypt_b64: String)-> String{
+    let mut output = "".to_string();
+    for c in bcrypt_b64.chars(){
+        output.push(char_to_std64(c));
     }
+    output
+}
 
-    fn std_to_bcrypt(std_b64: String) -> String {
-        let mut output = "".to_string();
-        for c in std_b64.chars(){
-            output.push(char_to_std64(c));
-        }
-        output
+
+fn char_to_std64(letter: char) -> char{
+    let mut ascii = letter as u8;
+    match ascii {
+        48..=55 | 65..=120 => ascii += 2,
+        46..=47 => ascii += 19,
+        121..=122 => ascii -= 73,
+        56 => ascii = 43,
+        57 => ascii = 47,
+        _ => panic!("Invalid Base64")
     }
+    ascii as char
+}
 
-    fn bcrypt_to_std(bcrypt_b64: String)-> String{
-        let mut output = "".to_string();
-        for c in bcrypt_b64.chars(){
-            output.push(char_to_std64(c));
-        }
-        output
+fn char_to_bcrypt64 (letter: char) -> char{
+    let mut ascii = letter as u8;
+    match ascii {
+        65..=66 => ascii -= 19,
+        50..=57 | 67..=122 => ascii -= 2,
+        48..=49 => ascii += 73,
+        43 => ascii = 56,
+        47 => ascii = 57,
+        _ => panic!("Invalid Base64")
     }
-
-
-    fn char_to_std64(letter: char) -> char{
-        let mut ascii = letter as u8;
-        match ascii {
-            48..=55 | 65..=120 => ascii += 2,
-            46..=47 => ascii += 19,
-            121..=122 => ascii -= 73,
-            56 => ascii = 43,
-            57 => ascii = 47,
-            _ => panic!("Invalid Base64")
-        }
-        ascii as char
-    }
-
-    fn char_to_bcrypt64 (letter: char) -> char{
-        let mut ascii = letter as u8;
-        match ascii {
-            65..=66 => ascii -= 19,
-            50..=57 | 67..=122 => ascii -= 2,
-            48..=49 => ascii += 73,
-            43 => ascii = 56,
-            47 => ascii = 57,
-            _ => panic!("Invalid Base64")
-        }
-        ascii as char
-    }
+    ascii as char
+}
 
 //     fn bcrypt_to_std_char(c: char)-> char{
 //         let index = bcrypt_vec.find(c).unwrap();
@@ -74,7 +77,7 @@
 //     }
 
 //     fn encode(bytes: &[u8]) -> String {
-        
+    
 //     }
 
 // }
