@@ -1,17 +1,23 @@
 #![feature(int_to_from_bytes)]
-#![allow(dead_code)]
-extern crate core;
 extern crate rand;
 extern crate base64;
 extern crate blowfish;
 
 use rand::Rng;
+//use base64::{encode_config, decode_config, CRYPT};
 use blowfish::Blowfish;
 
 mod b64;
 
+use b64::{encode, decode};
+
+// use block_modes::{Ecb, BlockMode, BlockModeIv};
+// use block_modes::block_padding::ZeroPadding;
+
+// type BlowfishECB = Ecb<Blowfish, ZeroPadding>;
+
 fn bcrypt(password: String) -> Bcrypt{
-    let inputs = Bcrypt{password: password,
+    let mut inputs = Bcrypt{password: password,
             salt: None,
             cost: None};
     inputs    
@@ -30,18 +36,17 @@ impl Bcrypt{
         let input = self.set_defualts();
         let cost = input.cost.unwrap();
         let salt = input.salt.unwrap();
-        let saltbytes = salt.to_vec();
-        let mut a = 0u8;
-        for c in saltbytes.iter(){
-            a = *c as u8;
-            println!("{:x?}", a);
 
-        }
-        let salt_b64 = b64::encode(saltbytes);
+        let salt_b64 = b64::encode(salt.to_vec());
         let digest: [u8; 24] = hasher(input);
-        let digest_b64 = b64::encode(digest[..23].to_vec());
+        let digest_b64 = b64::encode(digest.to_vec());
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
-        Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
+        Output{ digest,
+                digest_b64,
+                salt,
+                salt_b64,
+                cost,
+                hash_string}
     }
 
 
@@ -98,7 +103,7 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
 
     let mut state = Blowfish::bc_init_state();
     state.salted_expand_key(salt, password);
-    for _ in 0..1u32 << cost {
+    for _ in 0..2**&cost {
         state.bc_expand_key(password);
         state.bc_expand_key(salt);
     }
@@ -111,8 +116,10 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
     let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
     
-    pw_bytes.push(0);
-    let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
+    //pw_bytes.push(0);
+    let state = eks_blowfish_setup(&pw_bytes,
+                                   &salt,
+                                    cost);
 
 
     let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
@@ -164,15 +171,14 @@ mod tests {
     #[test]
     fn it_works() {
         
-        let saltvec = b64::decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
-        //let a : &[u8] = saltvec.as_ref();
+        let saltvec = decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
+        let a : &[u8] = saltvec.as_ref();
+        let mut salt_test = [0u8; 16]; 
         let mut result = bcrypt(String::from("correctbatteryhorsestapler"))
-                            .cost(4)
-                            .salt(salt_vec_to_array(saltvec));
+                            .cost(4);
+                            //.salt(salt_vec_to_array(saltvec));
         let out = result.hash();
         println!("{}", out.hash_string);
-        let res = "$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie".to_string();
-        assert_eq!(out.hash_string, res );
         //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
 
     }
