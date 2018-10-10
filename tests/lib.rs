@@ -1,8 +1,12 @@
-#[cfg(test)]
+#![no_std]
+
+extern crate std;
 extern crate bcrypt;
 
-use bcrypt::b64::decode;
-use bcrypt::pw;
+use std::vec::Vec;
+use std::string::String;
+use bcrypt::*;
+
 
 fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
     let mut out = [0u8; 16];
@@ -15,7 +19,7 @@ fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
 #[test]
 fn it_works() {
 
-    let saltvec = decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
+    let saltvec = b64::decode(String::from("EGdrhbKUv8Oc9vGiXX0HQO"));
     let a : &[u8] = saltvec.as_ref();
     let result = pw(String::from("correctbatteryhorsestapler"))
                         .cost(4)
