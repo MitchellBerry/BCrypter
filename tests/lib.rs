@@ -1,10 +1,11 @@
 #![no_std]
+#![feature(alloc)]
 
-extern crate std;
+extern crate alloc;
 extern crate bcrypt;
 
-use std::vec::Vec;
-use std::string::String;
+use alloc::vec::Vec;
+use alloc::string::String;
 use bcrypt::*;
 
 
