@@ -112,7 +112,7 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
 
     let mut state = Blowfish::bc_init_state();
     state.salted_expand_key(salt, password);
-    for _ in 0..2**&cost {
+    for _ in 0..1u32 << cost {
         state.bc_expand_key(password);
         state.bc_expand_key(salt);
     }
