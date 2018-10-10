@@ -18,11 +18,20 @@ fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
 }
 
 #[test]
+fn invalid_cost() {
+    let pw = String::from("password");
+    let result = password(pw)
+                    .cost(32)
+                    .hash();
+    
+}
+
+#[test]
 fn it_works() {
 
     let saltvec = b64::decode(String::from("EGdrhbKUv8Oc9vGiXX0HQO"));
     let a : &[u8] = saltvec.as_ref();
-    let result = pw(String::from("correctbatteryhorsestapler"))
+    let result = password(String::from("correctbatteryhorsestapler"))
                         .cost(4)
                         .salt(salt_vec_to_array(saltvec.clone()));
     let out = result.hash();
