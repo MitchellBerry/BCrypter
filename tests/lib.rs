@@ -1,6 +1,11 @@
 #[cfg(test)]
+extern crate bcrypt;
+extern crate b64;
+mod b64;
 
-use super::*;
+use b64::decode;
+
+use bcrypt::pw;
 
 fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
     let mut out = [0u8; 16];
@@ -12,10 +17,10 @@ fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
 
 #[test]
 fn it_works() {
-    
+
     let saltvec = b64::decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
     let a : &[u8] = saltvec.as_ref();
-    let result = bcrypt(String::from("correctbatteryhorsestapler"))
+    let result = pw(String::from("correctbatteryhorsestapler"))
                         .cost(4)
                         .salt(salt_vec_to_array(saltvec.clone()));
     let out = result.hash();
