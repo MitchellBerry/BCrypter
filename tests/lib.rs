@@ -17,7 +17,7 @@ fn it_works() {
 
     let saltvec = decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
     let a : &[u8] = saltvec.as_ref();
-    let result = bcrypt::pw(String::from("correctbatteryhorsestapler"))
+    let result = pw(String::from("correctbatteryhorsestapler"))
                         .cost(4)
                         .salt(salt_vec_to_array(saltvec.clone()));
     let out = result.hash();

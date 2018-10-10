@@ -9,6 +9,7 @@ extern crate base64;
 extern crate blowfish;
 
 pub mod b64;
+mod tests;
 
 use rand::Rng;
 use alloc::format;
