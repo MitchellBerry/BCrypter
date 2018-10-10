@@ -8,7 +8,6 @@ extern crate base64;
 extern crate blowfish;
 
 pub mod b64;
-mod tests;
 
 use rand::Rng;
 use alloc::format;
@@ -16,14 +15,14 @@ use alloc::vec::Vec;
 use blowfish::Blowfish;
 use alloc::string::String;
 
-pub fn pw(password: String) -> Bcrypt{
+pub fn password(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
 }
 
 pub struct Bcrypt {
-    pub password: String, 
-    pub salt : Option<[u8; 16]>,
-    pub cost : Option<u8>,
+    password: String, 
+    salt : Option<[u8; 16]>,
+    cost : Option<u8>,
 }
 
 impl Bcrypt{
@@ -32,7 +31,7 @@ impl Bcrypt{
         let cost = input.cost.unwrap();
         let salt = input.salt.unwrap();
         let salt_b64 = b64::encode(salt.to_vec());
-        let digest: [u8; 24] = hasher(input);
+        let digest: [u8; 24] = digest(input);
         let digest_b64 = b64::encode(digest[..23].to_vec()); //Remove last byte
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
         Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
@@ -48,7 +47,7 @@ impl Bcrypt{
 
     pub fn cost (self, cost: u8) -> Bcrypt {
         match cost {
-            4..=32 =>    Bcrypt {
+            4..=31 =>    Bcrypt {
                         password: self.password,
                         salt: self.salt,
                         cost: Some(cost)
@@ -89,7 +88,7 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     state
 }
 
-fn hasher(inputs: Bcrypt)-> [u8; 24]{
+fn digest(inputs: Bcrypt)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
     let salt = inputs.salt.unwrap();
     let cost = inputs.cost.unwrap();
