@@ -2,11 +2,11 @@
 
 extern crate std;
 
-use std::error;
+use std::error::Error;
 
 enum BcryptError {
     InvalidCost(Error),
-    VerifyFailed(Err)
+    VerifyFailed(Error)
 }
 
 impl fmt::Display for BcryptError {
