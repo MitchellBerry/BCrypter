@@ -96,6 +96,7 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
     let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
     pw_bytes.push(0);
+    if pw_bytes.len() > 72 {pw_bytes.truncate(72)};
     let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
     let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
                      0x64657253, 0x63727944, 0x6f756274];
