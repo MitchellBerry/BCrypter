@@ -16,7 +16,6 @@ use alloc::format;
 use std::vec::Vec;
 use blowfish::Blowfish;
 use std::string::String;
-use alloc::prelude::ToString;
 
 pub fn pw(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
