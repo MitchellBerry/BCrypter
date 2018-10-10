@@ -17,7 +17,7 @@ use blowfish::Blowfish;
 use std::string::String;
 use alloc::prelude::ToString;
 
-pub fn bcrypt(password: String) -> Bcrypt{
+pub fn pw(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
 }
 
