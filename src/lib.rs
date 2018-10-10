@@ -1,16 +1,28 @@
 #![feature(int_to_from_bytes)]
-#![allow(dead_code)]
-extern crate core;
+#![feature(slice_concat_ext)]
+#![feature(alloc)]
+#![no_std]
+
 extern crate rand;
 extern crate base64;
 extern crate blowfish;
-
+extern crate std;
+#[macro_use] 
+extern crate alloc;
 use rand::Rng;
+use std::vec::Vec;
 use blowfish::Blowfish;
+use core::fmt::Write;
+use core::marker::Sized;
+use std::slice::SliceConcatExt;
+use std::string::String;
+use std::string::ToString;
+use std::prelude::*;
+use std::fmt;
 
-mod b64;
+pub mod b64;
 
-fn bcrypt(password: String) -> Bcrypt{
+fn bcrypt(password: &'static str) -> Bcrypt{
     let inputs = Bcrypt{password: password,
             salt: None,
             cost: None};
@@ -19,7 +31,7 @@ fn bcrypt(password: String) -> Bcrypt{
 
 
 struct Bcrypt {
-    pub password: String, 
+    pub password: &'static str, 
     pub salt : Option<[u8; 16]>,
     pub cost : Option<u8>,
 }
@@ -30,21 +42,12 @@ impl Bcrypt{
         let input = self.set_defualts();
         let cost = input.cost.unwrap();
         let salt = input.salt.unwrap();
-        let saltbytes = salt.to_vec();
-        let mut a = 0u8;
-        for c in saltbytes.iter(){
-            a = *c as u8;
-            println!("{:x?}", a);
-
-        }
-        let salt_b64 = b64::encode(saltbytes);
-        let digest: [u8; 24] = hasher(input);
-        let digest_b64 = b64::encode(digest[..23].to_vec());
-        let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
-        Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
+        let salt_b64 = b64::encode(salt.to_vec());
+        let digest = hasher(input);
+        let digest_b64 = b64::encode(digest[..23].to_vec()); // Remove last byte
+        let hash_str = concat_hash(cost, &salt_b64, &digest_b64);
+        Output{ digest, digest_b64, salt, salt_b64, cost, hash_str}
     }
-
-
 
     fn salt (self, salt: [u8; 16]) -> Bcrypt {
         Bcrypt {
@@ -56,12 +59,12 @@ impl Bcrypt{
 
     fn cost (self, cost: u8) -> Bcrypt {
         match cost {
-            4..=32 =>    Bcrypt {
+            4..=31 =>    Bcrypt {
                         password: self.password,
                         salt: self.salt,
                         cost: Some(cost)
             },
-            _ => panic!("Invalid cost parameter")
+            _ => panic!("Invalid cost parameter, must be between 4 and 31")
         }   
     }
 
@@ -78,24 +81,36 @@ impl Bcrypt{
     }
 } 
 
-fn concat_hash_string(cost: u8, salt_b64 : &String, digest_b64: &String) -> String{
-    format!("$2b${:02}${}{}", cost, salt_b64, digest_b64)
+fn concat_hash(cost: u8, salt_b64 : &str, digest_b64: &str) -> &'static str{
+    // let output = concat!("$2b${}", "{}", cost, salt_b64, digest_b64);
+    // output
+    // let output: str = ;
+    // output += cost + salt_b64 + digest_b64;
+    // output;
+    // write_str()
+    //let output = String::with_capacity(60);
+    let mut cost_str =  std::str::from_utf8(&[cost]).unwrap(); 
+    let output = format!("$2b${:02}${}{}", cost_str, salt_b64, digest_b64);
+    //let output: str = "$2b$".add();
+    //let output_strings = ["$2b$", cost_str , "$", salt_b64, digest_b64 ];
+    //let output = output_strings.join("");
+
+
+    output.as_str()
 }
 
 struct Output {
     digest : [u8; 24],
-    digest_b64 : String,
+    digest_b64 : &'static str,
     salt: [u8; 16],
-    salt_b64: String,
+    salt_b64: &'static str,
     cost: u8,
-    hash_string: String
+    hash_str: &'static str
 
 }
 
 
-
 fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
-
     let mut state = Blowfish::bc_init_state();
     state.salted_expand_key(salt, password);
     for _ in 0..1u32 << cost {
@@ -110,34 +125,19 @@ fn hasher(inputs: Bcrypt)-> [u8; 24]{
     let salt = inputs.salt.unwrap();
     let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
-    
     pw_bytes.push(0);
     let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
-
-
-    let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
-                     0x64657253, 0x63727944, 0x6f756274];
-
+    let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c, 
+                     0x64657253, 0x63727944, 0x6f756274]; 
     for i in (0..6).step_by(2) {
         for _ in 0..64 {
             let (l, r) = state.bc_encrypt(ctext[i], ctext[i+1]);
             ctext[i] = l;
             ctext[i+1] = r;
         }
-
-        // let (mut low, mut mid) = (i*4, (i+1)*4);
-        // let ctext_bytes = ctext[i].to_be_bytes();
-        // let ctext_bytes1 = ctext[i+1].to_be_bytes();
-        // for j in 0..4 {
-        //     output[low + j] = ctext_bytes[j];
-        //     output[mid + j] = ctext_bytes1[j]; 
-        // }
         let (mut first, mut second) = (i*4, (i+1)*4);
         output.extend_from_slice(&ctext[i].to_be_bytes());
         output.extend_from_slice(&ctext[i+1].to_be_bytes());
-        
-        //write_u32_be(&mut output[i * 4..(i + 1) * 4], ctext[i]);
-        //write_u32_be(&mut output[(i + 1) * 4..(i + 2) * 4], ctext[i + 1]);
     }
     output_vec_to_array(output)
 }
@@ -163,22 +163,20 @@ mod tests {
     use super::*;
     #[test]
     fn it_works() {
-        
-        let saltvec = b64::decode("EGdrhbKUv8Oc9vGiXX0HQO".to_string());
-        //let a : &[u8] = saltvec.as_ref();
-        let mut result = bcrypt(String::from("correctbatteryhorsestapler"))
+        let saltvec = b64::decode("EGdrhbKUv8Oc9vGiXX0HQO".to_str());
+        let mut result = bcrypt(str::from("correctbatteryhorsestapler"))
                             .cost(4)
                             .salt(salt_vec_to_array(saltvec));
         let out = result.hash();
-        println!("{}", out.hash_string);
-        let res = "$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie".to_string();
-        assert_eq!(out.hash_string, res );
+        //println!("{}", out.hash_str);
+        let res = "$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie".to_str();
+        assert_eq!(out.hash_str, res );
         //"$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie"
 
     }
 
-    // #[test]
-    // fn b() {
-    //     unimplemented!();
-    // }
+    #[test]
+    fn name() {
+        ;
+    }
 }
