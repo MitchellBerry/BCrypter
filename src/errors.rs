@@ -1,5 +1,5 @@
 extern crate std;
-use self::std::{error, fmt};
+use self::std::fmt;
 
 #[derive(Debug)]
 pub struct InvalidCost;
@@ -14,12 +14,8 @@ pub enum VerifyError {
 
 impl fmt::Display for InvalidCost {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("invalid bcrypt parameters")
+    f.write_str("Invalid bcrypt cost parameter. Between 4 & 31 only")
     }
-}
-
-impl error::Error for InvalidCost {
-    fn description(&self) -> &str { "invalid bcrypt parameters" }
 }
 
 impl fmt::Display for VerifyError {
@@ -28,14 +24,5 @@ impl fmt::Display for VerifyError {
             VerifyError::HashMismatch => "password hash mismatch",
             VerifyError::InvalidFormat => "invalid `hashed_value` format",
         })
-    }
-}
-
-impl error::Error for VerifyError {
-    fn description(&self) -> &str {
-        match *self {
-            VerifyError::HashMismatch => "password hash mismatch",
-            VerifyError::InvalidFormat => "invalid `hashed_value` format",
-        }
     }
 }
