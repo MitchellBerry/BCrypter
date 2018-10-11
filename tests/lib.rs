@@ -6,12 +6,9 @@ extern crate bcrypt_rs;
 
 #[macro_use] extern crate std;
 
-
-
 use alloc::vec::Vec;
 use alloc::string::String;
 use bcrypt_rs::*;
-
 
 //#[test]
 fn invalid_cost() {
@@ -21,7 +18,6 @@ fn invalid_cost() {
                     .hash();
     
 }
-
 
 #[test]
 fn it_works() {
