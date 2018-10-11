@@ -34,18 +34,18 @@ pub fn digest_to_string(digest: [u8; 24])-> String{
     b64::encode(digest[..23].to_vec()) //Remove last byte
 }
 
-pub fn concat_hash_string(cost: u8, salt : &String, digest: &String) -> String{
+pub fn concat_hash_string(cost: u8, salt : &str, digest: &str) -> String{
     format!("$2b${:02}${}{}", cost, salt, digest)
 }
 
-pub fn valid_bcrypt_hash(b64: String) -> Result<bool, InvalidFormat>{
+pub fn valid_bcrypt_hash(b64: &str) -> Result<bool, InvalidFormat>{
     if b64.len() != 60 {
         return Err(InvalidFormat)
     }
-    valid_bcrypt_chars(b64)  
+    valid_bcrypt_chars(&b64)  
 }
 
-pub fn valid_bcrypt_chars(b64: String) -> Result<bool, InvalidFormat>{
+pub fn valid_bcrypt_chars(b64: &str) -> Result<bool, InvalidFormat>{
     for c in b64.chars(){
         match c as u8{
             36 | 46..=57 | 61 | 65..=90 | 97..=122 => (),
@@ -56,7 +56,8 @@ pub fn valid_bcrypt_chars(b64: String) -> Result<bool, InvalidFormat>{
 }
 
 pub fn valid_cost(cost: Option<u8>) -> Result<u8, InvalidCost>{
-    let param = match cost.unwrap() {
+    let param = cost.unwrap();
+    match param {
         4..=31 => Ok(param),
         _ => Err(InvalidCost)
     }
@@ -70,7 +71,7 @@ pub struct HashString {
 }
 
 pub fn split_hash_string(hash : &str) -> Result<HashString, InvalidFormat>{
-    match valid_bcrypt_hash(String::from(hash)){
+    match valid_bcrypt_hash(hash){
         Ok(_) => Ok(HashString{cost: String::from(&hash[5..8]), 
             salt_b64: String::from(&hash[8..31]),
             digest_b64: String::from(&hash[31..]),

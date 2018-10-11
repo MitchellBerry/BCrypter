@@ -32,8 +32,9 @@ pub struct Bcrypt {
 
 impl Bcrypt{
 
+    // Attempts constant time check of password against a bcrypt hash
     pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
-        let mut hash_parts = split_hash_string(bcrypt_hash)?;
+        let hash_parts = split_hash_string(bcrypt_hash)?;
         self.cost = Some(hash_parts.cost.as_bytes()[0]);
         self.salt = Some(salt_str_to_array(hash_parts.salt_b64));
         let digest = digest(self);
@@ -44,9 +45,10 @@ impl Bcrypt{
         else {Ok(false)}
     }
 
+    // Generates output struct from given inputs
     pub fn hash(self)-> Output{
         let input = self.set_defualts();
-        let cost = valid_cost(input.cost);
+        let cost = valid_cost(input.cost).expect("Invalid Cost Parameter");
         let salt = input.salt.unwrap();
         let salt_b64 = b64::encode(salt.to_vec());
         let digest = digest(input);
@@ -55,18 +57,21 @@ impl Bcrypt{
         Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
     }
 
+    // Salt setter
     pub fn salt (self, salt: [u8; 16]) -> Bcrypt {
         Bcrypt {password: self.password,
                 salt: Some(salt),
                 cost: self.cost}
     }
 
+    // Cost setter
     pub fn cost (self, cost: u8) -> Bcrypt {
         Bcrypt {password: self.password,
                 salt: self.salt,
                 cost: Some(cost)} 
     }
 
+    // Defaults to Cost = 12 and salt = 16 bytes from CSRNG
     pub fn set_defualts(mut self) -> Bcrypt{
         if self.salt == None {
             let mut rng = rand::thread_rng();
