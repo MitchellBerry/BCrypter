@@ -3,6 +3,7 @@
 
 extern crate alloc;
 extern crate bcrypt_rs;
+
 #[macro_use] extern crate std;
 
 
@@ -10,7 +11,6 @@ extern crate bcrypt_rs;
 use alloc::vec::Vec;
 use alloc::string::String;
 use bcrypt_rs::*;
-use b64;
 
 
 //#[test]
@@ -27,7 +27,7 @@ fn invalid_cost() {
 fn it_works() {
 
     use std::println;
-    let saltvec = b64::decode(String::from("EGdrhbKUv8Oc9vGiXX0HQO"));
+    //let saltvec = b64::decode(String::from("EGdrhbKUv8Oc9vGiXX0HQO"));
     //let a : &[u8] = saltvec.as_ref();
     let result = password(String::from("correctbatteryhorsestapler"))
                         .cost(4);

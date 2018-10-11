@@ -31,31 +31,31 @@ fn bcrypt_to_std(bcrypt_b64: String)-> String{
 }
 
 fn char_to_std64(letter: char) -> char{
-    let mut ascii = letter as u8;
-    match ascii {
-        48..=55 | 65..=88 | 97..=120 => ascii += 2,
-        89..=90 => ascii += 8,
-        46..=47 => ascii += 19,
-        121..=122 => ascii -= 73,
-        56 => ascii = 43,
-        57 => ascii = 47,
-        61 => ascii = 61,
+    let mut output = letter as u8;
+    match output {
+        48..=55 | 65..=88 | 97..=120 => output += 2,
+        89..=90 => output += 8,
+        46..=47 => output += 19,
+        121..=122 => output -= 73,
+        56 => output = 43,
+        57 => output = 47,
+        61 => output = 61,
         _ => panic!("Invalid Base64")
     }
-    ascii as char
+    output as char
 }
 
 fn char_to_bcrypt64 (letter: char) -> char{
-    let mut ascii = letter as u8;
-    match ascii {
-        50..=57 | 67..=90  | 99..=122 => ascii -= 2,
-        97..=98 => ascii -= 8,
-        65..=66 => ascii -= 19,
-        48..=49 => ascii += 73,
-        43 => ascii = 56,
-        47 => ascii = 57,
-        61 => ascii = 61,
+    let mut output = letter as u8;
+    match output {
+        50..=57 | 67..=90  | 99..=122 => output -= 2,
+        97..=98 => output -= 8,
+        65..=66 => output -= 19,
+        48..=49 => output += 73,
+        43 => output = 56,
+        47 => output = 57,
+        61 => output = 61,
         _ => panic!("Invalid Base64")
     }
-    ascii as char
+    output as char
 }
