@@ -32,7 +32,7 @@ pub struct Bcrypt {
 
 impl Bcrypt{
 
-    pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, errors::VerifyError>{
+    pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, errors::InvalidFormat>{
         let mut hash_parts = split_hash_string(bcrypt_hash)?;
         self.cost = Some(hash_parts.cost.as_bytes()[0]);
         self.salt = Some(salt_str_to_array(hash_parts.salt_b64));
@@ -101,7 +101,7 @@ pub struct Output {
     pub hash_string: String
 }
 
-// Expensive Key Schedule Blowfish Setup
+// Expensive Key Setup Blowfish
 fn eks(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     let mut state = Blowfish::bc_init_state();
     state.salted_expand_key(salt, password);
@@ -117,7 +117,7 @@ fn digest(inputs: Bcrypt)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
     let mut pw_bytes = inputs.password.into_bytes();
     pw_bytes.push(0); // null byte terminator
-    if pw_bytes.len() > 72 {pw_bytes.truncate(72)}; // 72 bytes max
+    if pw_bytes.len() > 72 {pw_bytes.truncate(72)};
     let state = eks(&pw_bytes, &inputs.salt.unwrap(), inputs.cost.unwrap());
     let mut ctext = [0x4f72_7068, 0x6561_6e42, 0x6568_6f6c,
                      0x6465_7253, 0x6372_7944, 0x6f75_6274];
