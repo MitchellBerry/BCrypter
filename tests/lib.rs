@@ -13,7 +13,7 @@ use bcrypt_rs::*;
 //#[test]
 fn invalid_cost() {
     let pw = String::from("password");
-    let result = password(pw)
+    let result = hasher(pw)
                     .cost(32)
                     .hash();
     
@@ -25,7 +25,7 @@ fn it_works() {
     use std::println;
     //let saltvec = b64::decode(String::from("EGdrhbKUv8Oc9vGiXX0HQO"));
     //let a : &[u8] = saltvec.as_ref();
-    let result = password(String::from("correctbatteryhorsestapler"))
+    let result = hasher(String::from("correctbatteryhorsestapler"))
                         .cost(4);
                         //.salt(salt_vec_to_array(saltvec.clone()));
     let out = result.hash();

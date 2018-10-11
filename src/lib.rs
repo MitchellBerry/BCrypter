@@ -4,23 +4,23 @@
 
 extern crate rand;
 extern crate alloc;
-extern crate crypto_ops;
 extern crate base64;
 extern crate blowfish;
-//extern crate std;
+extern crate crypto_ops;
 
 pub mod b64;
 pub mod utils;
 pub mod errors;
 
-pub use utils::*;
+use utils::*;
 use rand::Rng;
 use alloc::vec::Vec;
-use blowfish::Blowfish;
 use alloc::string::String;
+use errors::InvalidFormat;
+use blowfish::Blowfish;
 
 
-pub fn password(password: String) -> Bcrypt{
+pub fn hasher(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
 }
 
@@ -32,7 +32,7 @@ pub struct Bcrypt {
 
 impl Bcrypt{
 
-    pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, errors::InvalidFormat>{
+    pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
         let mut hash_parts = split_hash_string(bcrypt_hash)?;
         self.cost = Some(hash_parts.cost.as_bytes()[0]);
         self.salt = Some(salt_str_to_array(hash_parts.salt_b64));
@@ -44,14 +44,9 @@ impl Bcrypt{
         else {Ok(false)}
     }
 
-
-    pub fn digest_to_string(digest: [u8; 24])-> String{
-        b64::encode(digest[..23].to_vec()) //Remove last byte
-    }
-
     pub fn hash(self)-> Output{
         let input = self.set_defualts();
-        let cost = input.cost.unwrap();
+        let cost = valid_cost(input.cost);
         let salt = input.salt.unwrap();
         let salt_b64 = b64::encode(salt.to_vec());
         let digest = digest(input);
@@ -70,13 +65,6 @@ impl Bcrypt{
         Bcrypt {password: self.password,
                 salt: self.salt,
                 cost: Some(cost)} 
-    }
-
-    pub fn valid_cost(cost: u8) -> Result<bool, errors::InvalidCost>{
-        match cost {
-            4..=31 => Ok(true),
-            _ => Err(errors::InvalidCost)
-        }
     }
 
     pub fn set_defualts(mut self) -> Bcrypt{

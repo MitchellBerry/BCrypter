@@ -2,7 +2,7 @@ use b64;
 use alloc::format;
 use alloc::vec::Vec;
 use alloc::string::String;
-use errors::InvalidFormat;
+use errors::{InvalidFormat, InvalidCost};
 
 pub fn salt_str_to_array(salt_b64: String)-> [u8; 16]{
     let salt_vec = b64::decode(salt_b64);
@@ -53,6 +53,13 @@ pub fn valid_bcrypt_chars(b64: String) -> Result<bool, InvalidFormat>{
         }
     }
     Ok(true)
+}
+
+pub fn valid_cost(cost: Option<u8>) -> Result<u8, InvalidCost>{
+    let param = match cost.unwrap() {
+        4..=31 => Ok(param),
+        _ => Err(InvalidCost)
+    }
 }
 
 pub struct HashString {
