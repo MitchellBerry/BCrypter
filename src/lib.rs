@@ -8,11 +8,12 @@ extern crate base64;
 extern crate blowfish;
 extern crate std;
 
-pub mod b64;
+mod b64;
+mod utils;
 mod errors;
+pub use utils::*;
 
 use rand::Rng;
-use alloc::format;
 use alloc::vec::Vec;
 use blowfish::Blowfish;
 use alloc::string::String;
@@ -28,12 +29,24 @@ pub struct Bcrypt {
 }
 
 impl Bcrypt{
-    pub fn verify(bcrypt_hash: String){
-
+    pub fn verify(bcrypt_hash: &str){
+        let  hashstring = match split_hash_string(&crypt_hash){
+            Ok(hash) => hash,
+            Err(e) => Err(e)
+        }
+        //hash.digest_b64
     }
 
-    fn split_hash_string(hash_string : String){
-
+    fn split_hash_string(hash_string : &str) -> 
+        Result<HashString, errors::VerifyError>{
+        match b64::valid_bcrypt_hash(String::from(hash_string)){
+            Ok(outcome) => Ok(HashString{cost: String::from(&hash_string[5..8]), 
+                salt_b64: String::from(&hash_string[8..31]),
+                digest_b64: String::from(&hash_string[31..]),
+                hash_string: String::from(hash_string)
+            }),
+            Err(e) => Err(e) 
+        }
     }
 
     pub fn hash(self)-> Output{
@@ -48,22 +61,22 @@ impl Bcrypt{
     }
 
     pub fn salt (self, salt: [u8; 16]) -> Bcrypt {
-        Bcrypt {
-            password: self.password,
-            salt: Some(salt),
-            cost: self.cost
-        }
+        Bcrypt {password: self.password,
+                salt: Some(salt),
+                cost: self.cost}
     }
 
     pub fn cost (self, cost: u8) -> Bcrypt {
+        Bcrypt {password: self.password,
+                salt: self.salt,
+                cost: Some(cost)} 
+    }
+
+    pub fn valid_cost(cost: u8) -> Result<bool, errors::InvalidCost>{
         match cost {
-            4..=31 =>    Bcrypt {
-                        password: self.password,
-                        salt: self.salt,
-                        cost: Some(cost)
-            },
-            _ => panic!("Invalid cost parameter")
-        }   
+            4..=31 => Ok(true),
+            _ => Err(errors::InvalidCost)
+        }
     }
 
     pub fn set_defualts(mut self) -> Bcrypt{
@@ -88,7 +101,14 @@ pub struct Output {
     pub hash_string: String
 }
 
-fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
+pub struct HashString {
+    pub digest_b64 : String,
+    pub salt_b64 : String,
+    pub cost : String,
+    pub hash_string: String
+}
+
+fn eks(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     let mut state = Blowfish::bc_init_state();
     state.salted_expand_key(salt, password);
     for _ in 0..1u32 << cost {
@@ -100,12 +120,12 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
 
 fn digest(inputs: Bcrypt)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
-    let salt = inputs.salt.unwrap();
-    let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
-    if pw_bytes.len() > 71 {pw_bytes.truncate(72)};
     pw_bytes.push(0); // null byte terminator
-    let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
+    if pw_bytes.len() > 72 {pw_bytes.truncate(72)}; // Max len 72 bytes
+    // EKS Blowfish Setup
+    let state = eks(&pw_bytes, &inputs.salt.unwrap(), inputs.cost.unwrap());
+    //
     let mut ctext = [0x4f72_7068, 0x6561_6e42, 0x6568_6f6c,
                      0x6465_7253, 0x6372_7944, 0x6f75_6274];
     for i in (0..6).step_by(2) {
@@ -118,17 +138,5 @@ fn digest(inputs: Bcrypt)-> [u8; 24]{
         output.extend_from_slice(&ctext[i].to_be_bytes());
         output.extend_from_slice(&ctext[j].to_be_bytes());
     }
-    output_vec_to_array(output)
-}
-
-fn output_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
-    let mut out = [0u8; 24];
-    for (i, slice) in vec.iter().enumerate(){
-        out[i] = *slice;
-    }
-    out
-}
-
-fn concat_hash_string(cost: u8, salt : &String, digest: &String) -> String{
-    format!("$2b${:02}${}{}", cost, salt, digest)
+    digest_vec_to_array(output)
 }
