@@ -1,9 +1,10 @@
-use std::{error, fmt};
+extern crate std;
+use self::std::{error, fmt};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct InvalidCost;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum VerifyError {
     /// Password hash mismatch, e.g. due to the incorrect password.
     HashMismatch,

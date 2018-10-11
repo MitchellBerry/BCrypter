@@ -1,9 +1,12 @@
 [package]
-name = "bcrypt"
+name = "bcrypt-rs"
 version = "0.1.0"
 authors = ["Mitchell Berry <mitchellberry@protonmail.com>"]
+license = "MIT/Apache-2.0"
+keywords = ["crypto", "password", "hashing", "bcrypt"]
 
 [dependencies]
 blowfish = { version = "0.3.0", features = ["bcrypt"] }
+crypto-ops = "0.1.1"
 base64 = "0.9.3"
 rand = "0.5.5"

@@ -2,12 +2,11 @@
 #![feature(alloc)]
 
 extern crate alloc;
-extern crate bcrypt;
 #[macro_use] extern crate std;
 
 use alloc::vec::Vec;
 use alloc::string::String;
-use bcrypt::*;
+use self::*;
 
 
 //#[test]

@@ -1,12 +1,10 @@
-#![feature(alloc)]
-extern crate alloc;
-
 use b64;
 use alloc::format;
 use alloc::vec::Vec;
 use alloc::string::String;
+use errors::VerifyError;
 
-pub fn salt_str_to_arr(salt_b64: String)-> [u8; 16]{
+pub fn salt_str_to_array(salt_b64: String)-> [u8; 16]{
     let salt_vec = b64::decode(salt_b64);
     salt_vec_to_array(salt_vec)
 }
@@ -32,6 +30,45 @@ pub fn digest_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
     out
 }
 
+pub fn digest_to_string(digest: [u8; 24])-> String{
+    b64::encode(digest[..23].to_vec()) //Remove last byte
+}
+
 pub fn concat_hash_string(cost: u8, salt : &String, digest: &String) -> String{
     format!("$2b${:02}${}{}", cost, salt, digest)
+}
+
+pub fn valid_bcrypt_hash(b64: String) -> Result<bool, VerifyError>{
+    if b64.len() != 60 {
+        return Err(VerifyError::InvalidFormat)
+    }
+    valid_bcrypt_chars(b64)  
+}
+
+pub fn valid_bcrypt_chars(b64: String) -> Result<bool, VerifyError>{
+    for c in b64.chars(){
+        match c as u8{
+            36 | 46..=57 | 61 | 65..=90 | 97..=122 => (),
+            _ => return Err(VerifyError::InvalidFormat)
+        }
+    }
+    Ok(true)
+}
+
+pub struct HashString {
+    pub digest_b64 : String,
+    pub salt_b64 : String,
+    pub cost : String,
+    pub hash_string: String
+}
+
+pub fn split_hash_string(hash : &str) -> Result<HashString, VerifyError>{
+    match valid_bcrypt_hash(String::from(hash)){
+        Ok(outcome) => Ok(HashString{cost: String::from(&hash[5..8]), 
+            salt_b64: String::from(&hash[8..31]),
+            digest_b64: String::from(&hash[31..]),
+            hash_string: String::from(hash)
+        }),
+        Err(e) => Err(e) 
+    }
 }
