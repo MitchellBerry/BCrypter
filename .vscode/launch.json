@@ -10,7 +10,10 @@
             "name": "Debug unit tests in library 'bcrypt'",
             "cargo": {
                 "args": [
-                    "test"
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=bcrypt"
                 ],
                 "filter": {
                     "kind": "lib"

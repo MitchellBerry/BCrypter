@@ -1,6 +1,9 @@
+
+
 use b64;
 use alloc::format;
 use alloc::string::String;
+use alloc::prelude::SliceConcatExt;
 use errors::{InvalidFormat, InvalidCost};
 
 const VERSION: &str = "$2b$";
@@ -22,7 +25,8 @@ pub fn salt_vec_to_array(vec : &[u8]) -> [u8; 16] {
 }
 
 pub fn digest_str_to_array(digest_b64: &str) -> [u8; 24]{
-    let digest_vec = b64::decode(&digest_b64);
+    let padded = [digest_b64, "="].concat(); // Digest string is 31 bytes
+    let digest_vec = b64::decode(&padded);
     digest_vec_to_array(&digest_vec)
 }
 
@@ -75,9 +79,9 @@ pub struct HashString {
 // Parses full hash string into components
 pub fn split_hash_string(hash : &str) -> Result<HashString, InvalidFormat>{
     match valid_bcrypt_hash(hash){
-        Ok(_) => Ok(HashString{cost: String::from(&hash[5..8]), 
-            salt_b64: String::from(&hash[8..31]),
-            digest_b64: String::from(&hash[31..]),
+        Ok(_) => Ok(HashString{cost: String::from(&hash[4..6]), 
+            salt_b64: String::from(&hash[7..29]),
+            digest_b64: String::from(&hash[29..]),
             hash_string: String::from(hash)}),
         Err(e) => Err(e) 
     }

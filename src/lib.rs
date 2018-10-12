@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(alloc)]
 #![feature(int_to_from_bytes)]
+#![feature(slice_concat_ext)]
 
 extern crate rand;
 extern crate alloc;
@@ -34,14 +35,11 @@ impl Bcrypt{
     // Check password against a known bcrypt hash
     pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
         let hash_parts = split_hash_string(bcrypt_hash)?;
-        self.cost = Some(hash_parts.cost.as_bytes()[0]);
+        self.cost = Some(u8::from_str_radix(&hash_parts.cost, 10).unwrap());
         self.salt = Some(salt_str_to_array(&hash_parts.salt_b64));
         let digest = digest(self);
         let hashed_bytes = digest_str_to_array(&hash_parts.digest_b64);
-        if constant_time_eq(&digest, &hashed_bytes){
-            Ok(true)
-        }
-        else {Ok(false)}
+        Ok(constant_time_eq(&digest[..23], &hashed_bytes[..23]))
     }
 
     // Generates output struct from given inputs
