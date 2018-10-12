@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(alloc)]
+#[cfg(test)]
 
 extern crate alloc;
 extern crate bcrypt;
@@ -15,25 +16,34 @@ fn invalid_cost_high() {
     let result = hasher(pw)
                     .cost(32)
                     .hash();
-    assert!(result.is_err(), "32 cost param invalid")
+    assert!(result.is_err())
+}
+
+#[test]
+fn invalid_cost_low() {
+    let pw = String::from("password");
+    let result = hasher(pw)
+                    .cost(3)
+                    .hash();
+    assert!(result.is_err())
 }
 
 #[test]
 fn empty_password(){
-    let result = hasher(String::from("")).hash();
+    let result = hasher(String::from("")).cost(4).hash();
     assert!(result.is_ok())
 }
 
 #[test]
 fn basic_password() {
-    let result = hasher(String::from("123456")).hash();
+    let result = hasher(String::from("123456")).cost(4).hash();
     assert!(result.is_ok())
 }
 
 #[test]
 fn utf8_characters(){
     let utf8 = String::from("和风 ゼファー हलकी हवा نسيم عليل Céfiro");
-    let result = hasher(utf8).hash();
+    let result = hasher(utf8).cost(4).hash();
     assert!(result.is_ok())
 }
 
@@ -42,27 +52,23 @@ fn oversized_password() {
     // should truncate rather than panic
     let bytesize85 = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                                   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    let result = hasher(bytesize85).hash();
+    let result = hasher(bytesize85).cost(4).hash();
     assert!(result.is_ok())
 }
 
+#[test]
+fn verify_list_known_hashes() {
+    let passwords = ["", "7", "123456", "hunter2", "plantguideBelgium",
+     "JuneSafetyBeautyFailPartialSlowly"];
 
-
-
-// #[test]
-// fn it_works() {
-
-//     use std::println;
-//     //let saltvec = b64::decode(String::from("EGdrhbKUv8Oc9vGiXX0HQO"));
-//     //let a : &[u8] = saltvec.as_ref();
-//     let result = hasher(String::from("correctbatteryhorsestapler"))
-//                         .cost(4);
-//                         //.salt(salt_vec_to_array(saltvec.clone()));
-//     let out = result.hash();
-//     println!("{}", out.hash_string);
-
-//     println!("{}", out.hash_string.len());
-//     let a = "$2b$04$EGdrhbKUv8Oc9vGiXX0HQOxSg445d458Muh7DAHskb6QbtCvdxcie";
-//     println!("{}", a.len());
-
-// }
+     let hashes = ["$2a$04$yM38ULou7XWlFfIXKFvULuA4YqQ74vgd8AAD6gUlMdHcqzNkooIJW",
+                    "$2a$04$gYJKdRMZJCwmM7Nv0Jf2zuji/zOADSxeIkmM5RpMxKw6XHOU9FFuW",
+                    "$2a$04$9qV92tpa9g9SmuxEgSj0VOgDNdpHlDzkSfJoowqYL3JaIqrV0L8qC",
+                    "$2a$04$7eAf8viXin8zazyvaU2HLuZGEbvaHy/lsnlG.HFWkBST5irHhXKJO",
+                    "$2a$04$tVS9V4uwUywsvRvPSQoX1eThLRqz.SeEt3PqfvribZCeajKhYgPtm",
+                    "$2a$04$5XGs.ba8kks8/4A2YpFg6uD1wrs/tdUyT2lUVHgZjpud.9fxjcVnm"];
+    for i in 0..hashes.len() {
+        let result = hasher(String::from(passwords[i])).verify(hashes[i]).unwrap();
+        assert!(result)
+    }
+}
