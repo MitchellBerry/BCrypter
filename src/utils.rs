@@ -1,15 +1,19 @@
 use b64;
 use alloc::format;
-use alloc::vec::Vec;
 use alloc::string::String;
 use errors::{InvalidFormat, InvalidCost};
 
-pub fn salt_str_to_array(salt_b64: String)-> [u8; 16]{
-    let salt_vec = b64::decode(salt_b64);
-    salt_vec_to_array(salt_vec)
+const VERSION: &str = "$2b$";
+
+pub fn concat_hash_string(cost: u8, salt : &str, digest: &str) -> String{
+    format!("{}{:02}${}{}", VERSION, cost, salt, digest)
+}
+pub fn salt_str_to_array(salt_b64: &str)-> [u8; 16]{
+    let salt_vec = b64::decode(&salt_b64);
+    salt_vec_to_array(&salt_vec)
 }
 
-pub fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
+pub fn salt_vec_to_array(vec : &[u8]) -> [u8; 16] {
     let mut out = [0u8; 16];
     for (i, slice) in vec.iter().enumerate(){
         out[i] = *slice;
@@ -17,12 +21,12 @@ pub fn salt_vec_to_array(vec : Vec<u8>) -> [u8; 16] {
     out
 }
 
-pub fn digest_str_to_array(digest_b64: String) -> [u8; 24]{
-    let digest_vec = b64::decode(digest_b64);
-    digest_vec_to_array(digest_vec)
+pub fn digest_str_to_array(digest_b64: &str) -> [u8; 24]{
+    let digest_vec = b64::decode(&digest_b64);
+    digest_vec_to_array(&digest_vec)
 }
 
-pub fn digest_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
+pub fn digest_vec_to_array(vec : &[u8]) -> [u8; 24] {
     let mut out = [0u8; 24];
     for (i, slice) in vec.iter().enumerate(){
         out[i] = *slice;
@@ -31,12 +35,9 @@ pub fn digest_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
 }
 
 pub fn digest_to_string(digest: [u8; 24])-> String{
-    b64::encode(digest[..23].to_vec()) //Remove last byte
+    b64::encode(&digest[..23].to_vec()) //Remove last byte
 }
 
-pub fn concat_hash_string(cost: u8, salt : &str, digest: &str) -> String{
-    format!("$2b${:02}${}{}", cost, salt, digest)
-}
 
 pub fn valid_bcrypt_hash(b64: &str) -> Result<bool, InvalidFormat>{
     if b64.len() != 60 {

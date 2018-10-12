@@ -16,14 +16,15 @@ use utils::*;
 use rand::Rng;
 use alloc::vec::Vec;
 use alloc::string::String;
-use errors::InvalidFormat;
+use errors::{InvalidFormat, InvalidCost};
 use blowfish::Blowfish;
 
-
+// Initial constructor
 pub fn hasher(password: String) -> Bcrypt{
     Bcrypt{password: password, salt: None, cost: None}   
 }
 
+// Bcrypt hashing inputs
 pub struct Bcrypt {
     password: String, 
     salt : Option<[u8; 16]>,
@@ -31,14 +32,13 @@ pub struct Bcrypt {
 }
 
 impl Bcrypt{
-
-    // Attempts constant time check of password against a bcrypt hash
+    // Check password against a known bcrypt hash
     pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
         let hash_parts = split_hash_string(bcrypt_hash)?;
         self.cost = Some(hash_parts.cost.as_bytes()[0]);
-        self.salt = Some(salt_str_to_array(hash_parts.salt_b64));
+        self.salt = Some(salt_str_to_array(&hash_parts.salt_b64));
         let digest = digest(self);
-        let hashed_bytes = digest_str_to_array(hash_parts.digest_b64);
+        let hashed_bytes = digest_str_to_array(&hash_parts.digest_b64);
         if crypto_ops::fixed_time_eq(&digest, &hashed_bytes){
             Ok(true)
         }
@@ -46,15 +46,15 @@ impl Bcrypt{
     }
 
     // Generates output struct from given inputs
-    pub fn hash(self)-> Output{
+    pub fn hash(self)-> Result<Output, InvalidCost>{
         let input = self.set_defualts();
-        let cost = valid_cost(input.cost).expect("Invalid Cost Parameter");
+        let cost = valid_cost(input.cost)?;
         let salt = input.salt.unwrap();
-        let salt_b64 = b64::encode(salt.to_vec());
+        let salt_b64 = b64::encode(&salt.to_vec());
         let digest = digest(input);
         let digest_b64 = digest_to_string(digest);
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
-        Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
+        Ok(Output{ digest, digest_b64, salt, salt_b64, cost, hash_string})
     }
 
     // Salt setter
@@ -71,7 +71,7 @@ impl Bcrypt{
                 cost: Some(cost)} 
     }
 
-    // Defaults to Cost = 12 and salt = 16 bytes from CSRNG
+    // Defaults to Cost = 12 and salt bytes from OS RNG
     pub fn set_defualts(mut self) -> Bcrypt{
         if self.salt == None {
             let mut rng = rand::thread_rng();
@@ -85,6 +85,7 @@ impl Bcrypt{
     }
 } 
 
+// Hasher outputs
 pub struct Output {
     pub digest : [u8; 24],
     pub digest_b64 : String,
@@ -124,5 +125,5 @@ fn digest(inputs: Bcrypt)-> [u8; 24]{
         output.extend_from_slice(&ctext[i].to_be_bytes());
         output.extend_from_slice(&ctext[j].to_be_bytes());
     }
-    digest_vec_to_array(output)
+    digest_vec_to_array(&output)
 }
