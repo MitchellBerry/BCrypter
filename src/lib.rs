@@ -8,9 +8,9 @@ extern crate alloc;
 extern crate base64;
 extern crate blowfish;
 
-pub mod b64;
-pub mod utils;
-pub mod errors;
+mod b64;
+mod utils;
+mod errors;
 
 use utils::*;
 use rand::Rng;
