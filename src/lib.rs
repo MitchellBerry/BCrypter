@@ -14,10 +14,10 @@ pub mod errors;
 
 use utils::*;
 use rand::Rng;
+use blowfish::Blowfish;
 use alloc::vec::Vec;
 use alloc::string::String;
 use errors::{InvalidFormat, InvalidCost};
-use blowfish::Blowfish;
 
 // Initial constructor
 pub fn hasher(password: String) -> Bcrypt{
