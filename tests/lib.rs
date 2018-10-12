@@ -10,33 +10,33 @@ use alloc::string::String;
 #[test]
 fn invalid_cost_high() {
     let pw = String::from("password");
-    let result = hasher(pw).cost(32).hash();
+    let result = password(pw).cost(32).hash();
     assert!(result.is_err())
 }
 
 #[test]
 fn invalid_cost_low() {
     let pw = String::from("password");
-    let result = hasher(pw).cost(3).hash();
+    let result = password(pw).cost(3).hash();
     assert!(result.is_err())
 }
 
 #[test]
 fn empty_password(){
-    let result = hasher(String::from("")).cost(4).hash();
+    let result = password(String::from("")).cost(4).hash();
     assert!(result.is_ok())
 }
 
 #[test]
 fn basic_password() {
-    let result = hasher(String::from("123456")).cost(4).hash();
+    let result = password(String::from("123456")).cost(4).hash();
     assert!(result.is_ok())
 }
 
 #[test]
 fn utf8_characters(){
     let utf8 = String::from("和风 ゼファー हलकी हवा نسيم عليل Céfiro");
-    let result = hasher(utf8).cost(4).hash();
+    let result = password(utf8).cost(4).hash();
     assert!(result.is_ok())
 }
 
@@ -45,18 +45,18 @@ fn oversized_password() {
     // should truncate rather than panic
     let eightyfive_chars = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
                                 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    let result = hasher(eightyfive_chars).cost(4).hash();
+    let result = password(eightyfive_chars).cost(4).hash();
     assert!(result.is_ok())
 }
 
 #[test]
 fn null_byte_mid_string() {
     let salt = [42u8; 16]; 
-    let mid_string = hasher(String::from("null\0byte")).salt(salt).cost(4)
+    let mid_string = password(String::from("null\0byte")).salt(salt).cost(4)
                         .hash().unwrap().digest;
-    let null_terminator = hasher(String::from("null\0")).salt(salt).cost(4)
+    let null_terminator = password(String::from("null\0")).salt(salt).cost(4)
                         .hash().unwrap().digest;
-    let not_present = hasher(String::from("null")).salt(salt).cost(4)
+    let not_present = password(String::from("null")).salt(salt).cost(4)
                         .hash().unwrap().digest;
     assert_ne!(mid_string, null_terminator);
     assert_ne!(mid_string, not_present);
@@ -77,7 +77,7 @@ fn verify_list_known_hashes() {
                     "$2a$04$t1RGGM1/Y3GQYo3Z/cvW2ud0TAmtQfezLSqqnwHFHXPpHmSyRIgeK"];
 
     for i in 0..hashes.len() {
-        let result = hasher(String::from(passwords[i])).verify(hashes[i]).unwrap();
+        let result = password(String::from(passwords[i])).verify(hashes[i]).unwrap();
         assert!(result)
     }
 }
@@ -87,9 +87,9 @@ fn truncated_input() {
     let salt = [42u8; 16];
     let eighty_chars = String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890--------");
     let seventy_two_chars = String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890");
-    let oversized = hasher(eighty_chars).salt(salt).cost(4)
+    let oversized = password(eighty_chars).salt(salt).cost(4)
                         .hash().unwrap();
-    let truncated = hasher(seventy_two_chars).salt(salt).cost(4)
+    let truncated = password(seventy_two_chars).salt(salt).cost(4)
                         .hash().unwrap();
     assert_eq!(oversized.digest, truncated.digest);
 }

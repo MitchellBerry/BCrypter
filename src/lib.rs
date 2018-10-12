@@ -20,18 +20,28 @@ use alloc::string::String;
 use errors::{InvalidFormat, InvalidCost};
 
 // Initial constructor
-pub fn hasher(password: String) -> Bcrypt{
-    Bcrypt{password: password, salt: None, cost: None}   
+pub fn password(password: String) -> Inputs{
+    Inputs{password: password, salt: None, cost: None}   
 }
 
 // Bcrypt hashing inputs
-pub struct Bcrypt {
+pub struct Inputs {
     password: String, 
     salt : Option<[u8; 16]>,
     cost : Option<u8>,
 }
 
-impl Bcrypt{
+// Hasher outputs
+pub struct Bcrypt {
+    pub digest : [u8; 24],
+    pub digest_b64 : String,
+    pub salt: [u8; 16],
+    pub salt_b64: String,
+    pub cost: u8,
+    pub hash_string: String
+}
+
+impl Inputs{
     // Check password against a known bcrypt hash
     pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
         let hash_parts = split_hash_string(bcrypt_hash)?;
@@ -43,7 +53,7 @@ impl Bcrypt{
     }
 
     // Generates output struct from given inputs
-    pub fn hash(self)-> Result<Output, InvalidCost>{
+    pub fn hash(self)-> Result<Bcrypt, InvalidCost>{
         let input = self.set_defualts();
         let cost = valid_cost(input.cost)?;
         let salt = input.salt.unwrap();
@@ -51,25 +61,25 @@ impl Bcrypt{
         let digest = digest(input);
         let digest_b64 = digest_to_string(digest);
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
-        Ok(Output{ digest, digest_b64, salt, salt_b64, cost, hash_string})
+        Ok(Bcrypt{ digest, digest_b64, salt, salt_b64, cost, hash_string})
     }
 
     // Salt setter
-    pub fn salt (self, salt: [u8; 16]) -> Bcrypt {
-        Bcrypt {password: self.password,
+    pub fn salt (self, salt: [u8; 16]) -> Inputs {
+        Inputs {password: self.password,
                 salt: Some(salt),
                 cost: self.cost}
     }
 
     // Cost setter
-    pub fn cost (self, cost: u8) -> Bcrypt {
-        Bcrypt {password: self.password,
+    pub fn cost (self, cost: u8) -> Inputs {
+        Inputs {password: self.password,
                 salt: self.salt,
                 cost: Some(cost)} 
     }
 
     // Defaults to Cost = 12 and salt bytes from OS RNG
-    pub fn set_defualts(mut self) -> Bcrypt{
+    pub fn set_defualts(mut self) -> Inputs{
         if self.salt == None {
             let mut rng = rand::thread_rng();
             let salt : [u8; 16] = rng.gen();
@@ -81,16 +91,6 @@ impl Bcrypt{
         self
     }
 } 
-
-// Hasher outputs
-pub struct Output {
-    pub digest : [u8; 24],
-    pub digest_b64 : String,
-    pub salt: [u8; 16],
-    pub salt_b64: String,
-    pub cost: u8,
-    pub hash_string: String
-}
 
 // Expensive Key Setup Blowfish
 fn eks(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
@@ -104,7 +104,7 @@ fn eks(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
 }
 
 // Bcrypt hashing alogrithm, truncates password input at 72 bytes
-fn digest(inputs: Bcrypt)-> [u8; 24]{
+fn digest(inputs: Inputs)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
     let mut pw_bytes = inputs.password.into_bytes();
     pw_bytes.push(0); // null byte terminator
