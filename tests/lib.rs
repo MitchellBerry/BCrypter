@@ -10,7 +10,7 @@ use bcrypt::*;
 use alloc::string::String;
 
 #[test]
-fn invalid_cost() {
+fn invalid_cost_high() {
     let pw = String::from("password");
     let result = hasher(pw)
                     .cost(32)
@@ -18,9 +18,36 @@ fn invalid_cost() {
     assert!(result.is_err(), "32 cost param invalid")
 }
 
+#[test]
 fn empty_password(){
-    let
+    let result = hasher(String::from("")).hash();
+    assert!(result.is_ok())
 }
+
+#[test]
+fn basic_password() {
+    let result = hasher(String::from("123456")).hash();
+    assert!(result.is_ok())
+}
+
+#[test]
+fn utf8_characters(){
+    let utf8 = String::from("和风 ゼファー हलकी हवा نسيم عليل Céfiro");
+    let result = hasher(utf8).hash();
+    assert!(result.is_ok())
+}
+
+#[test]
+fn oversized_password() {
+    // should truncate rather than panic
+    let bytesize85 = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                                  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    let result = hasher(bytesize85).hash();
+    assert!(result.is_ok())
+}
+
+
+
 
 // #[test]
 // fn it_works() {

@@ -38,7 +38,6 @@ pub fn digest_to_string(digest: [u8; 24])-> String{
     b64::encode(&digest[..23].to_vec()) //Remove last byte
 }
 
-
 pub fn valid_bcrypt_hash(b64: &str) -> Result<bool, InvalidFormat>{
     if b64.len() != 60 {
         return Err(InvalidFormat)
@@ -56,6 +55,7 @@ pub fn valid_bcrypt_chars(b64: &str) -> Result<bool, InvalidFormat>{
     Ok(true)
 }
 
+// Bcrypt cost param must be between 4 and 31
 pub fn valid_cost(cost: Option<u8>) -> Result<u8, InvalidCost>{
     let param = cost.unwrap();
     match param {
@@ -64,6 +64,7 @@ pub fn valid_cost(cost: Option<u8>) -> Result<u8, InvalidCost>{
     }
 }
 
+// Struct for split hash string
 pub struct HashString {
     pub digest_b64 : String,
     pub salt_b64 : String,
@@ -71,6 +72,7 @@ pub struct HashString {
     pub hash_string: String
 }
 
+// Parses full hash string into components
 pub fn split_hash_string(hash : &str) -> Result<HashString, InvalidFormat>{
     match valid_bcrypt_hash(hash){
         Ok(_) => Ok(HashString{cost: String::from(&hash[5..8]), 
@@ -81,18 +83,18 @@ pub fn split_hash_string(hash : &str) -> Result<HashString, InvalidFormat>{
     }
 }
 
-// This function is non-inline to prevent the optimizer from looking inside it.
+// Non-inline to prevent the optimizer from looking inside it.
 #[inline(never)]
 fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
     let len = a.len();
     let a = &a[..len];
     let b = &b[..len];
 
-    let mut tmp = 0;
+    let mut comparator = 0;
     for i in 0..len {
-        tmp |= a[i] ^ b[i];
+        comparator |= a[i] ^ b[i];
     }
-    tmp // The compare with 0 must happen outside this function.
+    comparator // Compare with 0 must happen outside this function.
 }
 
 // Compares two equal-sized byte strings in constant time.
@@ -100,3 +102,4 @@ fn constant_time_ne(a: &[u8], b: &[u8]) -> u8 {
 pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     constant_time_ne(a, b) == 0
 }
+
