@@ -7,6 +7,5 @@ keywords = ["crypto", "password", "hashing", "bcrypt"]
 
 [dependencies]
 blowfish = { version = "0.3.0", features = ["bcrypt"] }
-crypto-ops = "0.1.1"
 base64 = "0.9.3"
 rand = "0.5.5"

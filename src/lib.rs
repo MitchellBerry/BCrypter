@@ -6,7 +6,6 @@ extern crate rand;
 extern crate alloc;
 extern crate base64;
 extern crate blowfish;
-extern crate crypto_ops;
 
 pub mod b64;
 pub mod utils;
@@ -39,7 +38,7 @@ impl Bcrypt{
         self.salt = Some(salt_str_to_array(&hash_parts.salt_b64));
         let digest = digest(self);
         let hashed_bytes = digest_str_to_array(&hash_parts.digest_b64);
-        if crypto_ops::fixed_time_eq(&digest, &hashed_bytes){
+        if constant_time_eq(&digest, &hashed_bytes){
             Ok(true)
         }
         else {Ok(false)}
