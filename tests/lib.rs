@@ -43,8 +43,8 @@ fn utf8_characters(){
 #[test]
 fn oversized_password() {
     // should truncate rather than panic
-    let eightyfive_chars = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-                                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    let eightyfive_chars = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                        AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
     let result = password(eightyfive_chars).cost(4).hash();
     assert!(result.is_ok())
 }
