@@ -1,7 +1,6 @@
 #![no_std]
 #![feature(alloc)]
 #![feature(int_to_from_bytes)]
-#![feature(slice_concat_ext)]
 
 extern crate rand;
 extern crate alloc;
