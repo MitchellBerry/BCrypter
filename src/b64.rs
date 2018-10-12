@@ -1,7 +1,6 @@
 use base64;
 use alloc::vec::Vec;
 use alloc::string::String;
-use alloc::prelude::ToString;
 
 pub fn decode(b64: &str) -> Vec<u8>{
     let std_b64 = bcrypt_to_std(&b64);
@@ -15,7 +14,7 @@ pub fn encode(bytes: &[u8]) -> String{
 }
 
 fn std_to_bcrypt(std_b64: &str) -> String {
-    let mut output = "".to_string();
+    let mut output = String::new();
     for c in std_b64.chars(){
         output.push(char_to_bcrypt64(c));
     }
@@ -23,7 +22,7 @@ fn std_to_bcrypt(std_b64: &str) -> String {
 }
 
 fn bcrypt_to_std(bcrypt_b64: &str)-> String{
-    let mut output = "".to_string();
+    let mut output = String::new();
     for c in bcrypt_b64.chars(){
         output.push(char_to_std64(c));
     }

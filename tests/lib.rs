@@ -4,26 +4,20 @@
 extern crate alloc;
 extern crate bcrypt;
 
-#[macro_use] extern crate std; // temporary for println!
-
 use bcrypt::*;
 use alloc::string::String;
 
 #[test]
 fn invalid_cost_high() {
     let pw = String::from("password");
-    let result = hasher(pw)
-                    .cost(32)
-                    .hash();
+    let result = hasher(pw).cost(32).hash();
     assert!(result.is_err())
 }
 
 #[test]
 fn invalid_cost_low() {
     let pw = String::from("password");
-    let result = hasher(pw)
-                    .cost(3)
-                    .hash();
+    let result = hasher(pw).cost(3).hash();
     assert!(result.is_err())
 }
 
@@ -49,10 +43,23 @@ fn utf8_characters(){
 #[test]
 fn oversized_password() {
     // should truncate rather than panic
-    let bytesize85 = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-                                  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    let result = hasher(bytesize85).cost(4).hash();
+    let eightyfive_chars = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    let result = hasher(eightyfive_chars).cost(4).hash();
     assert!(result.is_ok())
+}
+
+#[test]
+fn null_byte_mid_string() {
+    let salt = [42u8; 16]; 
+    let mid_string = hasher(String::from("null\0byte")).salt(salt).cost(4)
+                        .hash().unwrap().digest;
+    let null_terminator = hasher(String::from("null\0")).salt(salt).cost(4)
+                        .hash().unwrap().digest;
+    let not_present = hasher(String::from("null")).salt(salt).cost(4)
+                        .hash().unwrap().digest;
+    assert_ne!(mid_string, null_terminator);
+    assert_ne!(mid_string, not_present);
 }
 
 #[test]
@@ -73,4 +80,16 @@ fn verify_list_known_hashes() {
         let result = hasher(String::from(passwords[i])).verify(hashes[i]).unwrap();
         assert!(result)
     }
+}
+
+#[test]
+fn truncated_input() {
+    let salt = [42u8; 16];
+    let eighty_chars = String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890--------");
+    let seventy_two_chars = String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890");
+    let oversized = hasher(eighty_chars).salt(salt).cost(4)
+                        .hash().unwrap();
+    let truncated = hasher(seventy_two_chars).salt(salt).cost(4)
+                        .hash().unwrap();
+    assert_eq!(oversized.digest, truncated.digest);
 }

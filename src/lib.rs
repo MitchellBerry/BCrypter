@@ -39,7 +39,7 @@ impl Bcrypt{
         self.salt = Some(salt_str_to_array(&hash_parts.salt_b64));
         let digest = digest(self);
         let hashed_bytes = digest_str_to_array(&hash_parts.digest_b64);
-        Ok(constant_time_eq(&digest[..23], &hashed_bytes[..23]))
+        Ok(constant_time_eq(&digest[..23], &hashed_bytes[..23])) // Remove last byte
     }
 
     // Generates output struct from given inputs

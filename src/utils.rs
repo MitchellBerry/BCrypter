@@ -1,5 +1,3 @@
-
-
 use b64;
 use alloc::format;
 use alloc::string::String;
@@ -25,7 +23,7 @@ pub fn salt_vec_to_array(vec : &[u8]) -> [u8; 16] {
 }
 
 pub fn digest_str_to_array(digest_b64: &str) -> [u8; 24]{
-    let padded = [digest_b64, "="].concat(); // Digest string is 31 bytes
+    let padded = [digest_b64, "="].concat(); // Digest string is 31 chars
     let digest_vec = b64::decode(&padded);
     digest_vec_to_array(&digest_vec)
 }
