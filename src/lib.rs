@@ -18,7 +18,7 @@ use alloc::vec::Vec;
 use alloc::string::String;
 use errors::{InvalidFormat, InvalidCost};
 
-// Initial constructor
+// Initial constructor function
 pub fn password(password: String) -> Inputs{
     Inputs{password: password, salt: None, cost: None}   
 }

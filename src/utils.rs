@@ -103,3 +103,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     constant_time_ne(a, b) == 0
 }
 
+#[test]
+fn name() {
+    unimplemented!();
+}
