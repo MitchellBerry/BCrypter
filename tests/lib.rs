@@ -63,18 +63,18 @@ fn null_byte_mid_string() {
 }
 
 #[test]
-fn verify_list_known_hashes() {
-    // Tested on CyberChef - https://gchq.github.io/CyberChef
+fn verify_list_of_known_hashes() {
+    // From CyberChef - https://gchq.github.io/CyberChef
     let passwords = [ "", "7", "123456", "hunter2", "plantguideBelgium",
                     "JuneSafetyBeautyFailPartialSlowly", "和风 ゼファー हलकी हवा نسيم عليل Céfiro"];
 
-    let hashes = [ "$2a$04$yM38ULou7XWlFfIXKFvULuA4YqQ74vgd8AAD6gUlMdHcqzNkooIJW",
+    let hashes =  [ "$2a$04$yM38ULou7XWlFfIXKFvULuA4YqQ74vgd8AAD6gUlMdHcqzNkooIJW",
                     "$2a$04$gYJKdRMZJCwmM7Nv0Jf2zuji/zOADSxeIkmM5RpMxKw6XHOU9FFuW",
                     "$2a$04$9qV92tpa9g9SmuxEgSj0VOgDNdpHlDzkSfJoowqYL3JaIqrV0L8qC",
                     "$2a$04$7eAf8viXin8zazyvaU2HLuZGEbvaHy/lsnlG.HFWkBST5irHhXKJO",
                     "$2a$04$tVS9V4uwUywsvRvPSQoX1eThLRqz.SeEt3PqfvribZCeajKhYgPtm",
                     "$2a$04$5XGs.ba8kks8/4A2YpFg6uD1wrs/tdUyT2lUVHgZjpud.9fxjcVnm",
-                    "$2a$04$t1RGGM1/Y3GQYo3Z/cvW2ud0TAmtQfezLSqqnwHFHXPpHmSyRIgeK"];
+                    "$2a$04$t1RGGM1/Y3GQYo3Z/cvW2ud0TAmtQfezLSqqnwHFHXPpHmSyRIgeK" ];
 
     for i in 0..hashes.len() {
         let result = password(String::from(passwords[i])).verify(hashes[i]).unwrap();
