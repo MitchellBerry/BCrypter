@@ -70,14 +70,14 @@ impl Inputs{
                 cost: self.cost}
     }
 
-    // Cost setter
+    // Cost setter - raises InvalidCost if out of range upon hashing
     pub fn cost (self, cost: u8) -> Inputs {
         Inputs {password: self.password,
                 salt: self.salt,
                 cost: Some(cost)} 
     }
 
-    // Defaults to Cost = 12 and salt bytes from OS RNG
+    // Defaults to Cost = 12 and salt from OS RNG
     pub fn set_defualts(mut self) -> Inputs{
         if self.salt == None {
             let mut rng = rand::thread_rng();
