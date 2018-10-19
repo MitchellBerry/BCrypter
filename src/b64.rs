@@ -2,11 +2,15 @@ use base64;
 use alloc::vec::Vec;
 use alloc::string::String;
 
+/// Decodes a bcrypt / crypt / BSD base64 string into bytes
+/// # Panics
+/// If used outside of the hash can panic when fed invalid base64
 pub fn decode(b64: &str) -> Vec<u8>{
     let std_b64 = bcrypt_to_std(&b64);
     base64::decode(&std_b64).unwrap()
 }
 
+/// Encodes bytes into an unpadded bcrypt / crypt/ BSD base64 string
 pub fn encode(bytes: &[u8]) -> String{
     let std_b64 = base64::encode(&bytes);
     let trimmed = std_b64.replace("=", "");
