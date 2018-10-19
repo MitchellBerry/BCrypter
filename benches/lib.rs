@@ -10,13 +10,23 @@ use bcrypt::*;
 use test::Bencher;
 use alloc::string::String;
 
-fn basic_password_cost_4() {
+fn password_cost(n : u8) {  
     let pw_bytes = String::from("password");
-    let hasher = password(pw_bytes);    
-    assert!(hasher.cost(4).hash().is_ok())
+    let hasher = password(pw_bytes);  
+    hasher.cost(n).hash();
 }
 
 #[bench]
-fn bench_basic_password(b: &mut Bencher){
-    b.iter(|| basic_password_cost_4())
+fn cost_4(b: &mut Bencher){
+    b.iter(|| password_cost(4))
+}
+
+#[bench]
+fn cost_8(b: &mut Bencher){
+    b.iter(|| password_cost(8))
+}
+
+#[bench]
+fn cost_12(b: &mut Bencher){
+    b.iter(|| password_cost(12))
 }
