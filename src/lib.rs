@@ -18,19 +18,27 @@ use alloc::vec::Vec;
 use alloc::string::String;
 use errors::{InvalidFormat, InvalidCost};
 
-// Initial constructor function
+/// Initial constructor function, from which further parameters can be modified.
+/// # Example
+/// ```
+/// let pw = String::from("hunter2");
+/// let hasher = bcrypter::password(pw);
+/// ```
 pub fn password(password: String) -> Inputs{
     Inputs{password: password, salt: None, cost: None}   
 }
 
-// Bcrypt hashing inputs
+/// The hashing parameters, only a password is required. Defaults to a
+/// randomly generated salt and a cost of 12
 pub struct Inputs {
     password: String, 
     salt : Option<[u8; 16]>,
     cost : Option<u8>,
 }
 
-// Hasher outputs
+/// Hasher outputs, available as both bytes/ base64
+/// of the hash digest and salt. Also includes the cost parameter
+/// and the formatted bcrypt hash string.
 pub struct Bcrypt {
     pub digest : [u8; 24],
     pub digest_b64 : String,
@@ -41,7 +49,15 @@ pub struct Bcrypt {
 }
 
 impl Inputs{
-    // Check password against a known bcrypt hash
+    /// Checks password against a known bcrypt hash
+    /// # Errors
+    /// Throws InvalidFormat when the bcrypt hash has invalid base64 or formatting
+    /// # Examples
+    /// ```
+    /// let pw = String::from("hunter2");
+    /// let hash = String::from("$2a$04$7eAf8viXin8zazyvaU2HLuZGEbvaHy/lsnlG.HFWkBST5irHhXKJO");
+    /// let correct = bcrypter::password(pw).verify(&hash);
+    /// ```
     pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
         let hash_parts = split_hash_string(bcrypt_hash)?;
         self.cost = Some(u8::from_str_radix(&hash_parts.cost, 10).unwrap());
@@ -51,7 +67,19 @@ impl Inputs{
         Ok(constant_time_eq(&digest[..23], &hashed_bytes[..23])) // Last byte removed
     }
 
-    // Generates output struct from given inputs
+    /// Main hashing function. Returns a Bcrypt struct result from given inputs
+    /// 
+    /// # Errors
+    /// 
+    /// Throws an InvalidCost error if the cost parameter is invalid.
+    /// 
+    /// # Example
+    /// 
+    /// ```
+    /// let pw = String::from("hunter2");
+    /// let result = bcrypter::password(pw).hash().unwrap();
+    /// let hash = result.hash_string;
+    /// ```
     pub fn hash(self)-> Result<Bcrypt, InvalidCost>{
         let input = self.set_defualts();
         let cost = valid_cost(input.cost)?;
@@ -63,21 +91,34 @@ impl Inputs{
         Ok(Bcrypt{ digest, digest_b64, salt, salt_b64, cost, hash_string})
     }
 
-    // Salt setter
+    /// Sets salt parameter for the hasher, value is ignored when calling
+    /// verify function.
+    /// # Example
+    /// ```
+    /// let sixteen_bytes = [0u8; 16]; // Use appropiate random values instead
+    /// let pw = String::from("hunter2");
+    /// let result = bcrypter::password(pw).salt(sixteen_bytes).hash().unwrap();
+    /// ```
     pub fn salt (self, salt: [u8; 16]) -> Inputs {
         Inputs {password: self.password,
                 salt: Some(salt),
                 cost: self.cost}
     }
 
-    // Cost setter - raises InvalidCost if out of range upon hashing
+    /// Sets the cost parameter, value is ignored when calling verify function
+    /// # Example
+    /// ```
+    /// let pw = String::from("hunter2");
+    /// let result = bcrypter::password(pw).cost(8).hash().unwrap();
+    /// ```
     pub fn cost (self, cost: u8) -> Inputs {
         Inputs {password: self.password,
                 salt: self.salt,
                 cost: Some(cost)} 
     }
 
-    // Defaults to Cost = 12 and salt from OS RNG
+    /// Sets any input parameter that hasn't been modified to the
+    /// default values.
     pub fn set_defualts(mut self) -> Inputs{
         if self.salt == None {
             let mut rng = rand::thread_rng();
@@ -102,8 +143,15 @@ fn eks(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     state
 }
 
-// Bcrypt hashing alogrithm, truncates password input at 72 bytes
-fn digest(inputs: Inputs)-> [u8; 24]{
+/// Main Bcrypt hashing alogrithm, truncates password input at 72 bytes.
+/// Only returns the raw digest bytes.
+/// # Example
+/// ```
+/// let pw = String::from("hunter2");
+/// let inputs = bcrypter::password(pw).salt([0u8; 16]).cost(4);
+/// let digest_bytes: [u8; 24] = bcrypter::digest(inputs);
+/// ```
+pub fn digest(inputs: Inputs)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
     let mut pw_bytes = inputs.password.into_bytes();
     pw_bytes.push(0); // null byte terminator
