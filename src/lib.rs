@@ -7,56 +7,78 @@ extern crate alloc;
 extern crate base64;
 extern crate blowfish;
 
-pub mod b64;
+mod b64;
+mod utils;
+mod errors;
 
+use utils::*;
 use rand::Rng;
-use alloc::format;
-use alloc::vec::Vec;
 use blowfish::Blowfish;
+use alloc::vec::Vec;
 use alloc::string::String;
+use errors::{InvalidFormat, InvalidCost};
 
-pub fn password(password: String) -> Bcrypt{
-    Bcrypt{password: password, salt: None, cost: None}   
+// Initial constructor function
+pub fn password(password: String) -> Inputs{
+    Inputs{password: password, salt: None, cost: None}   
 }
 
-pub struct Bcrypt {
+// Bcrypt hashing inputs
+pub struct Inputs {
     password: String, 
     salt : Option<[u8; 16]>,
     cost : Option<u8>,
 }
 
-impl Bcrypt{
-    pub fn hash(self)-> Output{
+// Hasher outputs
+pub struct Bcrypt {
+    pub digest : [u8; 24],
+    pub digest_b64 : String,
+    pub salt: [u8; 16],
+    pub salt_b64: String,
+    pub cost: u8,
+    pub hash_string: String
+}
+
+impl Inputs{
+    // Check password against a known bcrypt hash
+    pub fn verify(mut self, bcrypt_hash: &str)-> Result<bool, InvalidFormat>{
+        let hash_parts = split_hash_string(bcrypt_hash)?;
+        self.cost = Some(u8::from_str_radix(&hash_parts.cost, 10).unwrap());
+        self.salt = Some(salt_str_to_array(&hash_parts.salt_b64));
+        let digest = digest(self);
+        let hashed_bytes = digest_str_to_array(&hash_parts.digest_b64);
+        Ok(constant_time_eq(&digest[..23], &hashed_bytes[..23])) // Last byte removed
+    }
+
+    // Generates output struct from given inputs
+    pub fn hash(self)-> Result<Bcrypt, InvalidCost>{
         let input = self.set_defualts();
-        let cost = input.cost.unwrap();
+        let cost = valid_cost(input.cost)?;
         let salt = input.salt.unwrap();
-        let salt_b64 = b64::encode(salt.to_vec());
-        let digest: [u8; 24] = digest(input);
-        let digest_b64 = b64::encode(digest[..23].to_vec()); //Remove last byte
+        let salt_b64 = b64::encode(&salt.to_vec());
+        let digest = digest(input);
+        let digest_b64 = digest_to_string(digest);
         let hash_string = concat_hash_string(cost, &salt_b64, &digest_b64);
-        Output{ digest, digest_b64, salt, salt_b64, cost, hash_string}
+        Ok(Bcrypt{ digest, digest_b64, salt, salt_b64, cost, hash_string})
     }
 
-    pub fn salt (self, salt: [u8; 16]) -> Bcrypt {
-        Bcrypt {
-            password: self.password,
-            salt: Some(salt),
-            cost: self.cost
-        }
+    // Salt setter
+    pub fn salt (self, salt: [u8; 16]) -> Inputs {
+        Inputs {password: self.password,
+                salt: Some(salt),
+                cost: self.cost}
     }
 
-    pub fn cost (self, cost: u8) -> Bcrypt {
-        match cost {
-            4..=31 =>    Bcrypt {
-                        password: self.password,
-                        salt: self.salt,
-                        cost: Some(cost)
-            },
-            _ => panic!("Invalid cost parameter, must be between 4 and 31")
-        }   
+    // Cost setter - raises InvalidCost if out of range upon hashing
+    pub fn cost (self, cost: u8) -> Inputs {
+        Inputs {password: self.password,
+                salt: self.salt,
+                cost: Some(cost)} 
     }
 
-    pub fn set_defualts(mut self) -> Bcrypt{
+    // Defaults to Cost = 12 and salt from OS RNG
+    pub fn set_defualts(mut self) -> Inputs{
         if self.salt == None {
             let mut rng = rand::thread_rng();
             let salt : [u8; 16] = rng.gen();
@@ -69,16 +91,8 @@ impl Bcrypt{
     }
 } 
 
-pub struct Output {
-    digest : [u8; 24],
-    digest_b64 : String,
-    salt: [u8; 16],
-    salt_b64: String,
-    cost: u8,
-    hash_string: String
-}
-
-fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
+// Expensive Key Setup Blowfish
+fn eks(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     let mut state = Blowfish::bc_init_state();
     state.salted_expand_key(salt, password);
     for _ in 0..1u32 << cost {
@@ -88,16 +102,15 @@ fn eks_blowfish_setup(password: &[u8], salt: &[u8;16], cost: u8) -> Blowfish {
     state
 }
 
-fn digest(inputs: Bcrypt)-> [u8; 24]{
+// Bcrypt hashing alogrithm, truncates password input at 72 bytes
+fn digest(inputs: Inputs)-> [u8; 24]{
     let mut output : Vec<u8> = Vec::new();
-    let salt = inputs.salt.unwrap();
-    let cost = inputs.cost.unwrap();
     let mut pw_bytes = inputs.password.into_bytes();
-    if pw_bytes.len() > 71 {pw_bytes.truncate(72)};
     pw_bytes.push(0); // null byte terminator
-    let state = eks_blowfish_setup(&pw_bytes, &salt, cost);
-    let mut ctext = [0x4f727068, 0x65616e42, 0x65686f6c,
-                     0x64657253, 0x63727944, 0x6f756274];
+    if pw_bytes.len() > 72 {pw_bytes.truncate(72)};
+    let state = eks(&pw_bytes, &inputs.salt.unwrap(), inputs.cost.unwrap());
+    let mut ctext = [0x4f72_7068, 0x6561_6e42, 0x6568_6f6c,
+                     0x6465_7253, 0x6372_7944, 0x6f75_6274];
     for i in (0..6).step_by(2) {
         let j = i + 1;
         for _ in 0..64 {
@@ -108,17 +121,5 @@ fn digest(inputs: Bcrypt)-> [u8; 24]{
         output.extend_from_slice(&ctext[i].to_be_bytes());
         output.extend_from_slice(&ctext[j].to_be_bytes());
     }
-    output_vec_to_array(output)
-}
-
-fn output_vec_to_array(vec : Vec<u8>) -> [u8; 24] {
-    let mut out = [0u8; 24];
-    for (i, slice) in vec.iter().enumerate(){
-        out[i] = *slice;
-    }
-    out
-}
-
-fn concat_hash_string(cost: u8, salt : &String, digest: &String) -> String{
-    format!("$2b${:02}${}{}", cost, salt, digest)
+    digest_vec_to_array(&output)
 }

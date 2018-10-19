@@ -1,19 +1,19 @@
-#[no_std]
+use alloc::fmt;
 
-extern crate std;
+#[derive(Debug)]
+pub struct InvalidCost;
 
-use std::error::Error;
+#[derive(Debug)]
+pub struct InvalidFormat;
 
-enum BcryptError {
-    InvalidCost(Error),
-    VerifyFailed(Error)
+impl fmt::Display for InvalidCost {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    f.write_str("Invalid bcrypt cost parameter. Must be between 4 and 31")
+    }
 }
 
-impl fmt::Display for BcryptError {
+impl fmt::Display for InvalidFormat {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {            
-            BcryptError::InvalidCost(ref err) => write!(f, "Cost must be between 4-31: {}", err),
-            CliError::Parse(ref err) => write!(f, "Parse error: {}", err),
-        }
+        f.write_str("Bcrypt hash is not in a valid format")
     }
 }
