@@ -13,7 +13,7 @@ use alloc::string::String;
 fn password_cost(n : u8) {  
     let pw_bytes = String::from("password");
     let hasher = password(pw_bytes);  
-    hasher.cost(n).hash();
+    hasher.cost(n).hash().unwrap();
 }
 
 #[bench]
