@@ -3,10 +3,10 @@
 #![feature(alloc)] 
 
 extern crate alloc;
-extern crate bcrypt;
+extern crate bcrypter;
 extern crate test;
 
-use bcrypt::*;
+use bcrypter::*;
 use test::Bencher;
 use alloc::string::String;
 

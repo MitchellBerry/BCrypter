@@ -2,9 +2,9 @@
 #![feature(alloc)]
 
 extern crate alloc;
-extern crate bcrypt;
+extern crate bcrypter;
 
-use bcrypt::*;
+use bcrypter::*;
 use alloc::string::String;
 
 #[test]
