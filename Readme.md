@@ -5,15 +5,15 @@
 
 [![Crates.io](https://img.shields.io/crates/v/rustc-serialize.svg)](https://crates.io/crates/bcrypter) [![Build Status](https://travis-ci.com/MitchellBerry/BCrypter.svg?branch=master)](https://travis-ci.com/MitchellBerry/BCrypter) ![Crates.io](https://img.shields.io/crates/l/rustc-serialize.svg)
 
-A pure rust implementation of the bcrypt hashing function based on the Blowfish cipher. Full API documentation can be found at 
+A pure rust implementation of the bcrypt hashing function based on the Blowfish cipher. Full API documentation can be found [here](https://docs.rs/crate/bcrypter/0.1.0)
 
 ## Installation
 
-Modify your Cargo.toml file:
+In your Cargo.toml file:
 
 ```toml
 [dependencies]
-bcrypter = "0.1.0"
+bcrypter = "0.1.1"
 ```
 
 ## Usage

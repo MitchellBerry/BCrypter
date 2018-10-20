@@ -1,12 +1,13 @@
 [package]
 name = "bcrypter"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Mitchell Berry <mitchellberry@protonmail.com>"]
 license = "MIT OR Apache-2.0"
 keywords = ["cryptography", "password", "hashing", "bcrypt"]
 description = "The bcrypt password hashing function in pure Rust. Supports no_std"
 repository = "https://github.com/MitchellBerry/BCrypter"
 readme = "Readme.md"
+documentation = "https://docs.rs/crate/bcrypter/0.1.1"
 categories = ["algorithms", "cryptography", "no-std", "wasm"]
 
 [dependencies]
