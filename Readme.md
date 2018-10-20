@@ -2,3 +2,80 @@
 
 
 # BCrypter
+
+![Crates.io](https://img.shields.io/crates/v/bcrypter.svg) ![Travis (.org)](https://img.shields.io/travis/mitchellberry/bcrypter.svg) ![Crates.io](https://img.shields.io/crates/l/rustc-serialize.svg)
+
+A pure rust implementation of the bcrypt hashing function.
+
+## Installation
+
+Modify your Cargo.toml file:
+
+```toml
+[dependencies]
+bcrypter = "0.1.0"
+```
+
+## Usage
+
+#### Basic hash
+```rust
+extern crate bcrypter;
+use bcrypter::password;
+
+let pw = "hunter2".to_string();
+let result = password(pw).hash().unwrap();
+let bcrypt_hash_string = result.hash_string;
+```
+
+#### Custom cost
+```rust
+let result = password(pw)
+                .cost(6)
+                .hash()
+                .unwrap();
+```
+
+#### Custom salt
+```rust
+let salt = [0u8; 16];
+let result = password(pw)
+                .salt(salt)
+                .cost(8)
+                .hash()
+                .unwrap();
+```
+#### Verify password
+```rust
+let known_hash = "$2a$04$7eAf8viXin8zazyvaU2HLuZGEbvaHy/lsnlG.HFWkBST5irHhXKJO".to_string();
+let correct_password : bool = password(pw)
+                                .verify(known_hash)
+                                .unwrap()
+```
+
+#### Raw digest
+```rust
+let result = password(pw).hash().unwrap();
+let digest_bytes : [u8: 24] = result.digest;
+```
+
+Full API documentation can be found here: 
+
+## Tests
+
+Test suite checks valid known hashes, oversized passwords, null bytes in strings
+
+## Benches
+
+<sup>Run on an Intel i7-7500U </sup>
+
+
+
+#### Notes
+
+* The function will default to a cost of 12 and a randomly generated 16 byte salt if none are provided.
+
+* The maximum password input is 72 bytes, anything over that will be truncated rather than raise an error. If you need larger inputs consider hashing it beforehand.
+
+
+
