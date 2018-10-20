@@ -5,7 +5,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/bcrypter.svg)](https://crates.io/crates/bcrypter) [![Build Status](https://travis-ci.com/MitchellBerry/BCrypter.svg?branch=master)](https://travis-ci.com/MitchellBerry/BCrypter) ![Crates.io](https://img.shields.io/crates/l/rustc-serialize.svg)
 
-A pure rust implementation of the bcrypt hashing function based on the Blowfish cipher. Currently only running on nightly builds. Full API documentation can be found [here](https://docs.rs/crate/bcrypter/0.1.0)
+A pure rust implementation of the bcrypt hashing function based on the Blowfish cipher. Currently only running on nightly builds. Full API documentation can be found [here](https://docs.rs/crate/bcrypter)
 
 ## Installation
 
