@@ -24,8 +24,7 @@ extern crate bcrypter;
 use bcrypter::password;
 
 let pw = "hunter2".to_string();
-let result = password(pw).hash().unwrap();
-let bcrypt_hash_string = result.hash_string;
+let bcrypt_hash = password(pw).hash().unwrap();
 ```
 
 #### Custom cost
